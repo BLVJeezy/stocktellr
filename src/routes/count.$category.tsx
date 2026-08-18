@@ -145,6 +145,7 @@ function LocationRow({
   qty: number;
 }) {
   const queryClient = useQueryClient();
+  const [draft, setDraft] = useState<string | null>(null);
 
   const save = async (next: number) => {
     const value = Number.isFinite(next) && next > 0 ? next : 0;
@@ -154,6 +155,19 @@ function LocationRow({
     } catch {
       toast.error("Opslaan mislukt");
     }
+  };
+
+  const commit = async () => {
+    if (draft === null) return;
+    const raw = draft.trim();
+    setDraft(null);
+    if (raw === "") return void save(0);
+    const result = evalFormula(raw);
+    if (result === null) {
+      toast.error("Ongeldige formule");
+      return;
+    }
+    await save(result);
   };
 
   return (
@@ -171,12 +185,22 @@ function LocationRow({
           <Minus className="size-4" />
         </button>
         <input
-          type="number"
-          inputMode="decimal"
-          value={qty}
-          onChange={(e) => void save(Number(e.target.value))}
-          onFocus={(e) => e.currentTarget.select()}
-          className="h-9 w-16 rounded-lg border border-input bg-background text-center text-sm font-semibold tabular-nums text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+          type="text"
+          inputMode="text"
+          placeholder="10+20+56"
+          title="Tip: tel op met een formule, bv. 10+20+56"
+          value={draft ?? String(qty)}
+          onChange={(e) => setDraft(e.target.value)}
+          onFocus={(e) => {
+            setDraft(String(qty));
+            e.currentTarget.select();
+          }}
+          onBlur={() => void commit()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+            if (e.key === "Escape") setDraft(null);
+          }}
+          className="h-9 w-24 rounded-lg border border-input bg-background text-center text-sm font-semibold tabular-nums text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
         />
         <button
           type="button"
