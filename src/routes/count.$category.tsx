@@ -170,47 +170,71 @@ function LocationRow({
     await save(result);
   };
 
+  // Live preview of the typed formula, e.g. "10+20+56" → 86.
+  const preview = useMemo(() => {
+    if (draft === null) return null;
+    const raw = draft.trim();
+    if (raw === "" || !/[+\-*/]/.test(raw)) return null;
+    const result = evalFormula(raw);
+    return result === null ? { valid: false } : { valid: true, result };
+  }, [draft]);
+
   return (
-    <div className="flex items-center gap-2">
-      <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted-foreground">
-        {location}
-      </span>
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          aria-label={`Min ${location}`}
-          onClick={() => void save(qty - 1)}
-          className="flex size-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition-transform active:scale-95"
-        >
-          <Minus className="size-4" />
-        </button>
-        <input
-          type="text"
-          inputMode="text"
-          placeholder="10+20+56"
-          title="Tip: tel op met een formule, bv. 10+20+56"
-          value={draft ?? String(qty)}
-          onChange={(e) => setDraft(e.target.value)}
-          onFocus={(e) => {
-            setDraft(String(qty));
-            e.currentTarget.select();
-          }}
-          onBlur={() => void commit()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") e.currentTarget.blur();
-            if (e.key === "Escape") setDraft(null);
-          }}
-          className="h-9 w-24 rounded-lg border border-input bg-background text-center text-sm font-semibold tabular-nums text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-        />
-        <button
-          type="button"
-          aria-label={`Plus ${location}`}
-          onClick={() => void save(qty + 1)}
-          className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform active:scale-95"
-        >
-          <Plus className="size-4" />
-        </button>
+    <div>
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted-foreground">
+          {location}
+        </span>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label={`Min ${location}`}
+            onClick={() => void save(qty - 1)}
+            className="flex size-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition-transform active:scale-95"
+          >
+            <Minus className="size-4" />
+          </button>
+          <input
+            type="text"
+            inputMode="text"
+            placeholder="10+20+56"
+            title="Tip: tel op met een formule, bv. 10+20+56"
+            value={draft ?? String(qty)}
+            onChange={(e) => setDraft(e.target.value)}
+            onFocus={(e) => {
+              setDraft(String(qty));
+              e.currentTarget.select();
+            }}
+            onBlur={() => void commit()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") setDraft(null);
+            }}
+            className="h-9 w-24 rounded-lg border border-input bg-background text-center text-sm font-semibold tabular-nums text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+          />
+          <button
+            type="button"
+            aria-label={`Plus ${location}`}
+            onClick={() => void save(qty + 1)}
+            className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform active:scale-95"
+          >
+            <Plus className="size-4" />
+          </button>
+        </div>
       </div>
+      {preview && (
+        <div className="mt-1 pl-1 text-right">
+          {preview.valid ? (
+            <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-primary">
+              <span className="opacity-70">{draft} =</span> {preview.result}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 text-[11px] font-semibold text-destructive">
+              Ongeldige formule
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
