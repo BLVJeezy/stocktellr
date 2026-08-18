@@ -5,7 +5,7 @@ import { ArrowLeft, Check, Loader2, Minus, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { setCount, useInventory } from "@/hooks/use-inventory";
-import { getCategory, type Category } from "@/lib/inventory";
+import { evalFormula, getCategory, type Category } from "@/lib/inventory";
 
 export const Route = createFileRoute("/count/$category")({
   beforeLoad: ({ params }) => {

@@ -88,16 +88,3 @@ export function evalFormula(input: string): number | null {
     return null;
   }
 }
-
-function _unusedToCsv(rows: string[][]): string {
-  return rows
-    .map((r) =>
-      r
-        .map((cell) => {
-          const v = cell ?? "";
-          return /[",;\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
-        })
-        .join(";"),
-    )
-    .join("\r\n");
-}
