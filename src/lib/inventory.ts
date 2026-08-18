@@ -75,3 +75,29 @@ export function toCsv(rows: string[][]): string {
     )
     .join("\r\n");
 }
+
+/** Evaluates a simple counting formula like "10+20+56" or "12*3-4". Returns null when invalid. */
+export function evalFormula(input: string): number | null {
+  const expr = input.replace(/,/g, ".").replace(/\s+/g, "");
+  if (!/^[0-9+\-*/.()]+$/.test(expr)) return null;
+  try {
+    // eslint-disable-next-line no-new-func
+    const result = Function(`"use strict";return (${expr});`)();
+    return typeof result === "number" && Number.isFinite(result) ? result : null;
+  } catch {
+    return null;
+  }
+}
+
+function _unusedToCsv(rows: string[][]): string {
+  return rows
+    .map((r) =>
+      r
+        .map((cell) => {
+          const v = cell ?? "";
+          return /[",;\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+        })
+        .join(";"),
+    )
+    .join("\r\n");
+}
