@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, Loader2, Minus, Plus, Search } from "lucide-react";
+import { AlertCircle, ArrowLeft, Check, Loader2, Minus, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { setCount, useInventory } from "@/hooks/use-inventory";
