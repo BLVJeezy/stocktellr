@@ -168,6 +168,7 @@ function LocationRow({
     if (raw === "") {
       setDraft(null);
       setError(null);
+      setShowHistory(false);
       return void save(0);
     }
     const result = evalFormula(raw);
