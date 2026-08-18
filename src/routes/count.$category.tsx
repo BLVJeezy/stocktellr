@@ -146,6 +146,8 @@ function LocationRow({
 }) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const save = async (next: number) => {
     const value = Number.isFinite(next) && next > 0 ? next : 0;
@@ -160,24 +162,33 @@ function LocationRow({
   const commit = async () => {
     if (draft === null) return;
     const raw = draft.trim();
-    setDraft(null);
-    if (raw === "") return void save(0);
+    if (raw === "") {
+      setDraft(null);
+      setError(null);
+      return void save(0);
+    }
     const result = evalFormula(raw);
     if (result === null) {
-      toast.error("Ongeldige formule");
+      // Keep the typed text visible and marked invalid so the user can correct it.
+      setError(`"${raw}" is geen geldige formule. Gebruik alleen cijfers en + - * / ( )`);
+      // Re-focus so the user can fix it immediately without losing their place.
+      requestAnimationFrame(() => inputRef.current?.focus());
       return;
     }
+    setDraft(null);
+    setError(null);
     await save(result);
   };
 
   // Live preview of the typed formula, e.g. "10+20+56" → 86.
   const preview = useMemo(() => {
-    if (draft === null) return null;
-    const raw = draft.trim();
-    if (raw === "" || !/[+\-*/]/.test(raw)) return null;
+    const raw = (draft ?? "").trim();
+    if (raw === "" || !/[+\-*/(]/.test(raw)) return null;
     const result = evalFormula(raw);
     return result === null ? { valid: false } : { valid: true, result };
   }, [draft]);
+
+  const showError = error ?? (preview && !preview.valid ? "Ongeldige formule — controleer de tekens" : null);
 
   return (
     <div>
@@ -189,52 +200,75 @@ function LocationRow({
           <button
             type="button"
             aria-label={`Min ${location}`}
-            onClick={() => void save(qty - 1)}
+            onClick={() => {
+              setError(null);
+              setDraft(null);
+              void save(qty - 1);
+            }}
             className="flex size-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition-transform active:scale-95"
           >
             <Minus className="size-4" />
           </button>
           <input
+            ref={inputRef}
             type="text"
             inputMode="text"
+            aria-invalid={showError ? true : undefined}
             placeholder="10+20+56"
             title="Tip: tel op met een formule, bv. 10+20+56"
             value={draft ?? String(qty)}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              if (error) setError(null);
+            }}
             onFocus={(e) => {
               setDraft(String(qty));
+              setError(null);
               e.currentTarget.select();
             }}
             onBlur={() => void commit()}
             onKeyDown={(e) => {
               if (e.key === "Enter") e.currentTarget.blur();
-              if (e.key === "Escape") setDraft(null);
+              if (e.key === "Escape") {
+                setDraft(null);
+                setError(null);
+                e.currentTarget.blur();
+              }
             }}
-            className="h-9 w-24 rounded-lg border border-input bg-background text-center text-sm font-semibold tabular-nums text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+            className={
+              "h-9 w-24 rounded-lg border bg-background text-center text-sm font-semibold tabular-nums text-foreground outline-none transition-colors focus:ring-2 " +
+              (showError
+                ? "border-destructive text-destructive ring-2 ring-destructive/30 focus:border-destructive focus:ring-destructive/40"
+                : "border-input focus:border-ring focus:ring-ring/30")
+            }
           />
           <button
             type="button"
             aria-label={`Plus ${location}`}
-            onClick={() => void save(qty + 1)}
+            onClick={() => {
+              setError(null);
+              setDraft(null);
+              void save(qty + 1);
+            }}
             className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform active:scale-95"
           >
             <Plus className="size-4" />
           </button>
         </div>
       </div>
-      {preview && (
+      {preview?.valid && !showError ? (
         <div className="mt-1 pl-1 text-right">
-          {preview.valid ? (
-            <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-primary">
-              <span className="opacity-70">{draft} =</span> {preview.result}
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 text-[11px] font-semibold text-destructive">
-              Ongeldige formule
-            </span>
-          )}
+          <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-primary">
+            <span className="opacity-70">{draft} =</span> {preview.result}
+          </span>
         </div>
-      )}
+      ) : showError ? (
+        <div className="mt-1 flex items-center justify-end gap-1 px-1 text-right">
+          <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 text-[11px] font-medium text-destructive">
+            <AlertCircle className="size-3 shrink-0" /> {showError}
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }
