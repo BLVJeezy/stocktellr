@@ -33,7 +33,7 @@ export const CATEGORIES: Category[] = [
     name: "Frigo Trays & Berging",
     short: "FT",
     locations: ["Frigo", "Berging"],
-    units: ["TRAYS"],
+    units: ["TRAYS", "LOS"],
   },
   {
     key: "haribo",
