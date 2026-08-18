@@ -1,11 +1,12 @@
 import { useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ArrowLeft, Check, Loader2, Minus, Plus, Search } from "lucide-react";
+import { AlertCircle, ArrowLeft, Check, History, Loader2, Minus, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { setCount, useInventory } from "@/hooks/use-inventory";
 import { evalFormula, getCategory, type Category } from "@/lib/inventory";
+import { useFormulaHistory } from "@/lib/formula-history";
 
 export const Route = createFileRoute("/count/$category")({
   beforeLoad: ({ params }) => {
@@ -147,7 +148,9 @@ function LocationRow({
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { history, load: loadHistory, remember } = useFormulaHistory(itemId, location);
 
   const save = async (next: number) => {
     const value = Number.isFinite(next) && next > 0 ? next : 0;
@@ -177,6 +180,8 @@ function LocationRow({
     }
     setDraft(null);
     setError(null);
+    remember(raw);
+    setShowHistory(false);
     await save(result);
   };
 
@@ -224,6 +229,8 @@ function LocationRow({
             onFocus={(e) => {
               setDraft(String(qty));
               setError(null);
+              loadHistory();
+              setShowHistory(true);
               e.currentTarget.select();
             }}
             onBlur={() => void commit()}
@@ -232,6 +239,7 @@ function LocationRow({
               if (e.key === "Escape") {
                 setDraft(null);
                 setError(null);
+                setShowHistory(false);
                 e.currentTarget.blur();
               }
             }}
@@ -267,6 +275,26 @@ function LocationRow({
           <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 text-[11px] font-medium text-destructive">
             <AlertCircle className="size-3 shrink-0" /> {showError}
           </span>
+        </div>
+      ) : null}
+      {showHistory && history.length > 0 ? (
+        <div className="mt-1 flex flex-wrap items-center justify-end gap-1 px-1">
+          <History className="size-3 shrink-0 text-muted-foreground" />
+          {history.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                setDraft(f);
+                setError(null);
+                inputRef.current?.focus();
+              }}
+              className="rounded-md bg-secondary px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-secondary-foreground transition-transform active:scale-95"
+            >
+              {f}
+            </button>
+          ))}
         </div>
       ) : null}
     </div>
