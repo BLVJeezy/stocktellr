@@ -14,7 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      counts: {
+        Row: {
+          id: string
+          item_id: string
+          location: string
+          qty: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          location: string
+          qty?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          location?: string
+          qty?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "counts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      items: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          unit: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          unit: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          unit?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
