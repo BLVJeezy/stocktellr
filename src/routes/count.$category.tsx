@@ -49,22 +49,22 @@ function CountScreen() {
     counts.find((c) => c.item_id === itemId && c.location === loc)?.qty ?? 0;
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-16">
-      <header className="sticky top-0 z-10 rounded-b-2xl bg-header px-4 pb-4 pt-5 text-header-foreground shadow-sm">
-        <div className="flex items-center gap-3">
+    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-16 md:max-w-6xl">
+      <header className="sticky top-0 z-10 rounded-b-2xl bg-header px-4 pb-4 pt-5 text-header-foreground shadow-sm md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] md:items-center md:gap-6 md:px-8 md:py-5">
+        <div className="flex min-w-0 items-center gap-3">
           <Link
             to="/"
-            className="flex size-9 items-center justify-center rounded-lg bg-white/10 transition-colors active:bg-white/20"
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/10 transition-colors hover:bg-white/20 active:bg-white/20"
             aria-label="Terug naar dashboard"
           >
             <ArrowLeft className="size-5" />
           </Link>
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold leading-tight">{cat.name}</h1>
+            <h1 className="truncate text-lg font-bold leading-tight md:text-2xl">{cat.name}</h1>
             <p className="truncate text-xs opacity-70">{cat.locations.join(" · ")}</p>
           </div>
         </div>
-        <div className="relative mt-3">
+        <div className="relative mt-3 md:mt-0">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 opacity-60" />
           <input
             value={search}
@@ -75,19 +75,24 @@ function CountScreen() {
         </div>
       </header>
 
-      <section className="space-y-3 px-3 pt-4">
+      <section className="space-y-3 px-3 pt-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 md:px-8 md:pt-6 xl:grid-cols-3">
         {isLoading ? (
-          <div className="flex items-center justify-center py-16 text-muted-foreground">
+          <div className="flex items-center justify-center py-16 text-muted-foreground md:col-span-full">
             <Loader2 className="size-6 animate-spin" />
           </div>
         ) : items.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted-foreground">Geen artikelen gevonden.</p>
+          <p className="py-16 text-center text-sm text-muted-foreground md:col-span-full">
+            Geen artikelen gevonden.
+          </p>
         ) : (
           items.map((item) => {
             const total = cat.locations.reduce((s, loc) => s + qtyOf(item.id, loc), 0);
             const done = total > 0;
             return (
-              <article key={item.id} className="rounded-2xl border border-border bg-card p-3.5">
+              <article
+                key={item.id}
+                className="rounded-2xl border border-border bg-card p-3.5 md:flex md:flex-col md:p-4 md:transition-shadow md:hover:shadow-md"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <h2 className="truncate text-sm font-semibold text-card-foreground">
@@ -108,7 +113,7 @@ function CountScreen() {
                   )}
                 </div>
 
-                <div className="mt-3 space-y-2">
+                <div className="mt-3 space-y-2 md:flex-1">
                   {cat.locations.map((loc) => (
                     <LocationRow
                       key={loc}
