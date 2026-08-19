@@ -49,3 +49,28 @@ export async function setCount(itemId: string, location: string, qty: number) {
     );
   if (error) throw error;
 }
+
+const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
+
+export async function uploadItemImage(itemId: string, file: File) {
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const path = `${itemId}/${Date.now()}.${ext || "jpg"}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("product-images")
+    .upload(path, file, { contentType: file.type || "image/jpeg", upsert: true });
+  if (uploadError) throw uploadError;
+
+  const { data: signed, error: signError } = await supabase.storage
+    .from("product-images")
+    .createSignedUrl(path, TEN_YEARS);
+  if (signError || !signed?.signedUrl) throw signError ?? new Error("Kon geen link maken");
+
+  const { error } = await supabase
+    .from("items")
+    .update({ image_url: signed.signedUrl })
+    .eq("id", itemId);
+  if (error) throw error;
+
+  return signed.signedUrl;
+}
