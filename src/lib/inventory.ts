@@ -54,6 +54,7 @@ export type Item = {
   name: string;
   unit: string;
   sort_order: number;
+  image_url: string | null;
 };
 
 export type Count = {

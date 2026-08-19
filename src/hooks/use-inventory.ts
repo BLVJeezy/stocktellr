@@ -6,7 +6,7 @@ import type { Count, Item } from "@/lib/inventory";
 
 async function fetchInventory() {
   const [itemsRes, countsRes] = await Promise.all([
-    supabase.from("items").select("id, category, name, unit, sort_order").order("sort_order"),
+    supabase.from("items").select("id, category, name, unit, sort_order, image_url").order("sort_order"),
     supabase.from("counts").select("id, item_id, location, qty"),
   ]);
   if (itemsRes.error) throw itemsRes.error;

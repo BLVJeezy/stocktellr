@@ -93,6 +93,20 @@ function CountScreen() {
                 key={item.id}
                 className="rounded-2xl border border-border bg-card p-3.5 md:flex md:flex-col md:p-4 md:transition-shadow md:hover:shadow-md"
               >
+                {item.image_url ? (
+                  <div className="mb-3 flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-secondary/40">
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      loading="lazy"
+                      className="h-full w-full object-contain p-2"
+                      onError={(e) => {
+                        e.currentTarget.parentElement?.classList.add("hidden");
+                      }}
+                    />
+                  </div>
+                ) : null}
+
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <h2 className="truncate text-sm font-semibold text-card-foreground">
