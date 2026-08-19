@@ -155,6 +155,96 @@ function CountScreen() {
   );
 }
 
+function ItemImage({
+  itemId,
+  name,
+  imageUrl,
+}: {
+  itemId: string;
+  name: string;
+  imageUrl: string | null;
+}) {
+  const queryClient = useQueryClient();
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      await uploadItemImage(itemId, file);
+      setFailed(false);
+      await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      toast.success("Foto bijgewerkt");
+    } catch {
+      toast.error("Uploaden mislukt");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="relative mb-3 flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-secondary/40">
+      {imageUrl && !failed ? (
+        <img
+          src={imageUrl}
+          alt={name}
+          loading="lazy"
+          className="h-full w-full object-contain p-2"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <ImageIcon className="size-8 text-muted-foreground/50" />
+      )}
+
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          void handleFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          void handleFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+
+      <div className="absolute bottom-1.5 right-1.5 flex gap-1.5">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => cameraRef.current?.click()}
+          aria-label={`Foto maken voor ${name}`}
+          className="flex size-8 items-center justify-center rounded-lg bg-card/90 text-card-foreground shadow-sm ring-1 ring-border transition-colors hover:bg-card disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => galleryRef.current?.click()}
+          aria-label={`Foto kiezen uit galerij voor ${name}`}
+          className="flex size-8 items-center justify-center rounded-lg bg-card/90 text-card-foreground shadow-sm ring-1 ring-border transition-colors hover:bg-card disabled:opacity-60"
+        >
+          <ImagePlus className="size-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function LocationRow({
   itemId,
   location,
