@@ -1,10 +1,22 @@
 import { useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ArrowLeft, Check, History, Loader2, Minus, Plus, Search } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Camera,
+  Check,
+  History,
+  ImageIcon,
+  ImagePlus,
+  Loader2,
+  Minus,
+  Plus,
+  Search,
+} from "lucide-react";
 import { toast } from "sonner";
 
-import { setCount, useInventory } from "@/hooks/use-inventory";
+import { setCount, uploadItemImage, useInventory } from "@/hooks/use-inventory";
 import { evalFormula, getCategory, type Category } from "@/lib/inventory";
 import { useFormulaHistory } from "@/lib/formula-history";
 
@@ -93,19 +105,7 @@ function CountScreen() {
                 key={item.id}
                 className="rounded-2xl border border-border bg-card p-3.5 md:flex md:flex-col md:p-4 md:transition-shadow md:hover:shadow-md"
               >
-                {item.image_url ? (
-                  <div className="mb-3 flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-secondary/40">
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      loading="lazy"
-                      className="h-full w-full object-contain p-2"
-                      onError={(e) => {
-                        e.currentTarget.parentElement?.classList.add("hidden");
-                      }}
-                    />
-                  </div>
-                ) : null}
+                <ItemImage itemId={item.id} name={item.name} imageUrl={item.image_url} />
 
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
