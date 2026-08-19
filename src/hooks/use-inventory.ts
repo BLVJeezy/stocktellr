@@ -50,6 +50,24 @@ export async function setCount(itemId: string, location: string, qty: number) {
   if (error) throw error;
 }
 
+export async function addItem(category: string, name: string, unit: string) {
+  const { data: last } = await supabase
+    .from("items")
+    .select("sort_order")
+    .eq("category", category)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { data, error } = await supabase
+    .from("items")
+    .insert({ category, name, unit, sort_order: (last?.sort_order ?? 0) + 1 })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id as string;
+}
+
 const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
 
 export async function uploadItemImage(itemId: string, file: File) {
