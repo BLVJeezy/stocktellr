@@ -10,10 +10,12 @@ import {
   ChevronRight,
   Radio,
 } from "lucide-react";
+import { FileText } from "lucide-react";
 import { toast } from "sonner";
 
 import { useInventory } from "@/hooks/use-inventory";
 import { CATEGORIES, toCsv } from "@/lib/inventory";
+import { exportInventoryPdf } from "@/lib/pdf-export";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -77,6 +79,11 @@ function Dashboard() {
     toast.success("Export gedownload");
   };
 
+  const handleExportPdf = () => {
+    exportInventoryPdf(items, counts);
+    toast.success("PDF gedownload");
+  };
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-10 md:max-w-5xl md:pb-16">
       <header className="rounded-b-3xl bg-header px-5 pb-8 pt-8 text-header-foreground md:mt-6 md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:gap-6 md:rounded-3xl md:px-10 md:py-10">
@@ -90,13 +97,22 @@ function Dashboard() {
             Iedereen telt tegelijk — alles synchroniseert vanzelf.
           </p>
         </div>
-        <button
-          onClick={handleExport}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98] md:mt-0 md:w-auto md:shrink-0 md:hover:brightness-110"
-        >
-          <Download className="size-4" />
-          Exporteer alle tellingen (CSV)
-        </button>
+        <div className="mt-5 grid gap-2 md:mt-0 md:shrink-0 md:grid-cols-2">
+          <button
+            onClick={handleExportPdf}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98] md:hover:brightness-110"
+          >
+            <FileText className="size-4" />
+            Exporteer PDF
+          </button>
+          <button
+            onClick={handleExport}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98]"
+          >
+            <Download className="size-4" />
+            Exporteer CSV
+          </button>
+        </div>
       </header>
 
       <section className="space-y-3 px-4 pt-5 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 md:px-0 md:pt-8 lg:grid-cols-3">

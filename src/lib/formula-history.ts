@@ -25,6 +25,11 @@ function write(store: Store) {
 
 const slotKey = (itemId: string, location: string) => `${itemId}::${location}`;
 
+/** Last entered formula for a slot, if it was a real calculation. */
+export function lastFormula(itemId: string, location: string): string | null {
+  return read()[slotKey(itemId, location)]?.[0] ?? null;
+}
+
 /** Short per item/location history of entered formulas, kept on this device. */
 export function useFormulaHistory(itemId: string, location: string) {
   const [history, setHistory] = useState<string[]>([]);
