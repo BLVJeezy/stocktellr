@@ -78,28 +78,30 @@ function Dashboard() {
   };
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-10">
-      <header className="rounded-b-3xl bg-header px-5 pb-8 pt-8 text-header-foreground">
-        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest opacity-70">
-          <Radio className="size-3.5" />
-          Live telling
+    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-10 md:max-w-5xl md:pb-16">
+      <header className="rounded-b-3xl bg-header px-5 pb-8 pt-8 text-header-foreground md:mt-6 md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:gap-6 md:rounded-3xl md:px-10 md:py-10">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest opacity-70">
+            <Radio className="size-3.5" />
+            Live telling
+          </div>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Stocktelling</h1>
+          <p className="mt-1 text-sm opacity-75">
+            Iedereen telt tegelijk — alles synchroniseert vanzelf.
+          </p>
         </div>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">Stocktelling</h1>
-        <p className="mt-1 text-sm opacity-75">
-          Iedereen telt tegelijk — alles synchroniseert vanzelf.
-        </p>
         <button
           onClick={handleExport}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98]"
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98] md:mt-0 md:w-auto md:shrink-0 md:hover:brightness-110"
         >
           <Download className="size-4" />
           Exporteer alle tellingen (CSV)
         </button>
       </header>
 
-      <section className="space-y-3 px-4 pt-5">
+      <section className="space-y-3 px-4 pt-5 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 md:px-0 md:pt-8 lg:grid-cols-3">
         {isLoading ? (
-          <div className="flex items-center justify-center py-16 text-muted-foreground">
+          <div className="flex items-center justify-center py-16 text-muted-foreground md:col-span-full">
             <Loader2 className="size-6 animate-spin" />
           </div>
         ) : (
@@ -113,7 +115,7 @@ function Dashboard() {
                 key={cat.key}
                 to="/count/$category"
                 params={{ category: cat.key }}
-                className="block rounded-2xl border border-border bg-card p-4 shadow-sm transition-transform active:scale-[0.99]"
+                className="block rounded-2xl border border-border bg-card p-4 shadow-sm transition-all active:scale-[0.99] md:p-5 md:hover:-translate-y-0.5 md:hover:border-primary/40 md:hover:shadow-md"
               >
                 <div className="flex items-center gap-3">
                   <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
