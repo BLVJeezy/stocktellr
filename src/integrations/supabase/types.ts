@@ -51,6 +51,7 @@ export type Database = {
           category: string
           created_at: string
           id: string
+          image_url: string | null
           name: string
           sort_order: number
           unit: string
@@ -59,6 +60,7 @@ export type Database = {
           category: string
           created_at?: string
           id?: string
+          image_url?: string | null
           name: string
           sort_order?: number
           unit: string
@@ -67,6 +69,7 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          image_url?: string | null
           name?: string
           sort_order?: number
           unit?: string
