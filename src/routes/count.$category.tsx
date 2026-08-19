@@ -16,7 +16,14 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { setCount, uploadItemImage, useInventory } from "@/hooks/use-inventory";
+import { addItem, setCount, uploadItemImage, useInventory } from "@/hooks/use-inventory";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { evalFormula, getCategory, type Category } from "@/lib/inventory";
 import { useFormulaHistory } from "@/lib/formula-history";
 
@@ -61,7 +68,7 @@ function CountScreen() {
     counts.find((c) => c.item_id === itemId && c.location === loc)?.qty ?? 0;
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-16 md:max-w-6xl">
+    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-28 md:max-w-6xl">
       <header className="sticky top-0 z-10 rounded-b-2xl bg-header px-4 pb-4 pt-5 text-header-foreground shadow-sm md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] md:items-center md:gap-6 md:px-8 md:py-5">
         <div className="flex min-w-0 items-center gap-3">
           <Link
@@ -151,7 +158,103 @@ function CountScreen() {
           })
         )}
       </section>
+
+      <AddItemBar category={category} units={cat.units} />
     </main>
+  );
+}
+
+function AddItemBar({ category, units }: { category: string; units: string[] }) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [unit, setUnit] = useState(units[0] ?? "LOS");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    try {
+      await addItem(category, trimmed, unit);
+      await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      toast.success("Product toegevoegd");
+      setName("");
+      setOpen(false);
+    } catch {
+      toast.error("Toevoegen mislukt");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-3 py-3 backdrop-blur md:px-8">
+        <div className="mx-auto w-full max-w-md md:max-w-6xl">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-transform active:scale-[0.99]"
+          >
+            <Plus className="size-4" /> Nieuw product toevoegen
+          </button>
+        </div>
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Nieuw product</DialogTitle>
+            <DialogDescription>Voeg een artikel toe aan deze categorie.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Naam</label>
+              <input
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void submit();
+                }}
+                placeholder="bv. Croky Chips Naturel 150g"
+                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Eenheid</label>
+              <div className="flex flex-wrap gap-1.5">
+                {units.map((u) => (
+                  <button
+                    key={u}
+                    type="button"
+                    onClick={() => setUnit(u)}
+                    className={
+                      "rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors " +
+                      (unit === u
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground")
+                    }
+                  >
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={saving || !name.trim()}
+              onClick={() => void submit()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+              Toevoegen
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
