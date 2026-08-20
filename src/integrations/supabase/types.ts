@@ -14,71 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      count_snapshots: {
-        Row: {
-          id: string
-          label: string
-          taken_at: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          label: string
-          taken_at?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          label?: string
-          taken_at?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
-      count_snapshot_rows: {
-        Row: {
-          id: string
-          snapshot_id: string
-          item_id: string | null
-          item_name: string
-          item_category: string
-          item_unit: string
-          item_sort_order: number
-          location: string
-          qty: number
-        }
-        Insert: {
-          id?: string
-          snapshot_id: string
-          item_id?: string | null
-          item_name: string
-          item_category: string
-          item_unit: string
-          item_sort_order?: number
-          location: string
-          qty?: number
-        }
-        Update: {
-          id?: string
-          snapshot_id?: string
-          item_id?: string | null
-          item_name?: string
-          item_category?: string
-          item_unit?: string
-          item_sort_order?: number
-          location?: string
-          qty?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "count_snapshot_rows_snapshot_id_fkey"
-            columns: ["snapshot_id"]
-            isOneToOne: false
-            referencedRelation: "count_snapshots"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       counts: {
         Row: {
           id: string
@@ -117,8 +52,6 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
-          done: boolean
-          comment: string | null
           name: string
           sort_order: number
           unit: string
@@ -128,8 +61,6 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
-          done?: boolean
-          comment?: string | null
           name: string
           sort_order?: number
           unit: string
@@ -139,8 +70,6 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
-          done?: boolean
-          comment?: string | null
           name?: string
           sort_order?: number
           unit?: string
