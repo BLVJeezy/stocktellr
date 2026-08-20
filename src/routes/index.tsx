@@ -45,6 +45,11 @@ const ICONS: Record<string, typeof Candy> = {
   frigo_los: Refrigerator,
   frigo_trays: Boxes,
   haribo: Package,
+  gadgets: Gamepad2,
+  jimmys: Popcorn,
+  lampen: Lightbulb,
+  bonnen: Ticket,
+  brillen: Glasses,
 };
 
 function Dashboard() {
