@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      count_snapshot_rows: {
+        Row: {
+          id: string
+          item_category: string
+          item_id: string | null
+          item_name: string
+          item_sort_order: number
+          item_unit: string
+          location: string
+          qty: number
+          snapshot_id: string
+        }
+        Insert: {
+          id?: string
+          item_category: string
+          item_id?: string | null
+          item_name: string
+          item_sort_order?: number
+          item_unit: string
+          location: string
+          qty?: number
+          snapshot_id: string
+        }
+        Update: {
+          id?: string
+          item_category?: string
+          item_id?: string | null
+          item_name?: string
+          item_sort_order?: number
+          item_unit?: string
+          location?: string
+          qty?: number
+          snapshot_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "count_snapshot_rows_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "count_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      count_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          taken_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          taken_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          taken_at?: string
+        }
+        Relationships: []
+      }
       counts: {
         Row: {
           id: string
@@ -49,7 +114,9 @@ export type Database = {
       items: {
         Row: {
           category: string
+          comment: string | null
           created_at: string
+          done: boolean
           id: string
           image_url: string | null
           name: string
@@ -58,7 +125,9 @@ export type Database = {
         }
         Insert: {
           category: string
+          comment?: string | null
           created_at?: string
+          done?: boolean
           id?: string
           image_url?: string | null
           name: string
@@ -67,7 +136,9 @@ export type Database = {
         }
         Update: {
           category?: string
+          comment?: string | null
           created_at?: string
+          done?: boolean
           id?: string
           image_url?: string | null
           name?: string
