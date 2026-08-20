@@ -42,6 +42,41 @@ export const CATEGORIES: Category[] = [
     locations: ["Voorraad Klein"],
     units: ["KG", "BAK"],
   },
+  {
+    key: "gadgets",
+    name: "Gadgets",
+    short: "GAD",
+    locations: ["Toog", "Berging"],
+    units: ["STUKS", "DOOS"],
+  },
+  {
+    key: "jimmys",
+    name: "Jimmy's Producten",
+    short: "JIM",
+    locations: ["Toog", "Berging"],
+    units: ["DOOS", "LOS"],
+  },
+  {
+    key: "lampen",
+    name: "Long Life Lampen (Xenon)",
+    short: "LMP",
+    locations: ["Projectie"],
+    units: ["STUKS"],
+  },
+  {
+    key: "bonnen",
+    name: "Bonnen",
+    short: "BON",
+    locations: ["Kassa", "Kluis"],
+    units: ["STUKS"],
+  },
+  {
+    key: "brillen",
+    name: "3D Brillen",
+    short: "3D",
+    locations: ["Voorraad"],
+    units: ["STUKS"],
+  },
 ];
 
 export function getCategory(key: string): Category | undefined {

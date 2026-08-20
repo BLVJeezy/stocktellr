@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Radio,
 } from "lucide-react";
+import { Gamepad2, Popcorn, Lightbulb, Ticket, Glasses } from "lucide-react";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
 
@@ -44,6 +45,11 @@ const ICONS: Record<string, typeof Candy> = {
   frigo_los: Refrigerator,
   frigo_trays: Boxes,
   haribo: Package,
+  gadgets: Gamepad2,
+  jimmys: Popcorn,
+  lampen: Lightbulb,
+  bonnen: Ticket,
+  brillen: Glasses,
 };
 
 function Dashboard() {
