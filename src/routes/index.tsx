@@ -9,12 +9,16 @@ import {
   Package,
   ChevronRight,
   Radio,
+  History,
+  Save,
 } from "lucide-react";
 import { Gamepad2, Popcorn, Lightbulb, Ticket, Glasses } from "lucide-react";
 import { FileText } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { useInventory } from "@/hooks/use-inventory";
+import { useSaveSnapshot } from "@/hooks/use-snapshots";
 import { CATEGORIES, toCsv } from "@/lib/inventory";
 import { exportInventoryPdf } from "@/lib/pdf-export";
 
@@ -54,6 +58,15 @@ const ICONS: Record<string, typeof Candy> = {
 
 function Dashboard() {
   const { data, isLoading } = useInventory();
+  const saveSnapshot = useSaveSnapshot();
+  const [defaultLabel] = useState(() => {
+    const now = new Date();
+    const months = [
+      "Januari", "Februari", "Maart", "April", "Mei", "Juni",
+      "Juli", "Augustus", "September", "Oktober", "November", "December",
+    ];
+    return `${months[now.getMonth()]} ${now.getFullYear()}`;
+  });
 
   const items = data?.items ?? [];
   const counts = data?.counts ?? [];
@@ -90,6 +103,21 @@ function Dashboard() {
     toast.success("PDF gedownload");
   };
 
+  const handleSaveSnapshot = () => {
+    const label = window.prompt(
+      "Naam voor deze telling (bv. maand):",
+      defaultLabel
+    );
+    if (!label || !label.trim()) return;
+    saveSnapshot.mutate(
+      { label: label.trim(), items, counts },
+      {
+        onSuccess: () => toast.success(`Telling "${label.trim()}" opgeslagen`),
+        onError: (err) => toast.error(`Opslaan mislukt: ${(err as Error).message}`),
+      }
+    );
+  };
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-10 md:max-w-5xl md:pb-16">
       <header className="rounded-b-3xl bg-header px-5 pb-8 pt-8 text-header-foreground md:mt-6 md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:gap-6 md:rounded-3xl md:px-10 md:py-10">
@@ -103,20 +131,39 @@ function Dashboard() {
             Iedereen telt tegelijk — alles synchroniseert vanzelf.
           </p>
         </div>
-        <div className="mt-5 grid gap-2 md:mt-0 md:shrink-0 md:grid-cols-2">
+        <div className="mt-5 grid grid-cols-2 gap-2 md:mt-0 md:shrink-0 md:grid-cols-4">
+          <button
+            onClick={handleSaveSnapshot}
+            disabled={saveSnapshot.isPending || isLoading}
+            className="col-span-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60 md:col-span-1 md:hover:brightness-110"
+          >
+            {saveSnapshot.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
+            Bewaar telling
+          </button>
+          <Link
+            to="/history"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98]"
+          >
+            <History className="size-4" />
+            Historiek
+          </Link>
           <button
             onClick={handleExportPdf}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98] md:hover:brightness-110"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98]"
           >
             <FileText className="size-4" />
-            Exporteer PDF
+            PDF
           </button>
           <button
             onClick={handleExport}
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98]"
           >
             <Download className="size-4" />
-            Exporteer CSV
+            CSV
           </button>
         </div>
       </header>
