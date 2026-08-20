@@ -90,6 +90,8 @@ export type Item = {
   unit: string;
   sort_order: number;
   image_url: string | null;
+  done: boolean;
+  comment: string | null;
 };
 
 export type Count = {

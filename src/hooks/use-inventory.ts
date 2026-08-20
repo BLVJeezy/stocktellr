@@ -68,6 +68,24 @@ export async function addItem(category: string, name: string, unit: string) {
   return data.id as string;
 }
 
+export async function deleteItem(itemId: string) {
+  const { error } = await supabase.from("items").delete().eq("id", itemId);
+  if (error) throw error;
+}
+
+export async function setItemDone(itemId: string, done: boolean) {
+  const { error } = await supabase.from("items").update({ done }).eq("id", itemId);
+  if (error) throw error;
+}
+
+export async function setItemComment(itemId: string, comment: string) {
+  const { error } = await supabase
+    .from("items")
+    .update({ comment: comment.trim() === "" ? null : comment.trim() })
+    .eq("id", itemId);
+  if (error) throw error;
+}
+
 const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
 
 export async function uploadItemImage(itemId: string, file: File) {

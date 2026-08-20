@@ -10,13 +10,23 @@ import {
   ImageIcon,
   ImagePlus,
   Loader2,
+  MessageSquare,
   Minus,
   Plus,
   Search,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { addItem, setCount, uploadItemImage, useInventory } from "@/hooks/use-inventory";
+import {
+  addItem,
+  deleteItem,
+  setCount,
+  setItemComment,
+  setItemDone,
+  uploadItemImage,
+  useInventory,
+} from "@/hooks/use-inventory";
 import {
   Dialog,
   DialogContent,
@@ -106,7 +116,6 @@ function CountScreen() {
         ) : (
           items.map((item) => {
             const total = cat.locations.reduce((s, loc) => s + qtyOf(item.id, loc), 0);
-            const done = total > 0;
             return (
               <article
                 key={item.id}
@@ -123,15 +132,7 @@ function CountScreen() {
                       {item.unit}
                     </span>
                   </div>
-                  {done ? (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success px-2.5 py-1 text-[11px] font-semibold text-success-foreground">
-                      <Check className="size-3" /> Geteld
-                    </span>
-                  ) : (
-                    <span className="shrink-0 rounded-full bg-pending px-2.5 py-1 text-[11px] font-semibold text-pending-foreground">
-                      Nog te tellen
-                    </span>
-                  )}
+                  <DoneToggle itemId={item.id} done={item.done} />
                 </div>
 
                 <div className="mt-3 space-y-2 md:flex-1">
@@ -152,6 +153,11 @@ function CountScreen() {
                   <span className="text-base font-bold tabular-nums text-card-foreground">
                     {total} <span className="text-xs font-medium text-muted-foreground">{item.unit}</span>
                   </span>
+                </div>
+
+                <div className="mt-2 flex items-center gap-2">
+                  <CommentButton itemId={item.id} name={item.name} comment={item.comment} />
+                  <DeleteItemButton itemId={item.id} name={item.name} />
                 </div>
               </article>
             );
@@ -255,6 +261,150 @@ function AddItemBar({ category, units }: { category: string; units: string[] }) 
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function DoneToggle({ itemId, done }: { itemId: string; done: boolean }) {
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+
+  const toggle = async () => {
+    setBusy(true);
+    try {
+      await setItemDone(itemId, !done);
+      await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+    } catch {
+      toast.error("Bijwerken mislukt");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={() => void toggle()}
+      disabled={busy}
+      aria-pressed={done}
+      className={
+        "inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-60 " +
+        (done
+          ? "bg-success text-success-foreground"
+          : "bg-pending text-pending-foreground hover:bg-pending/80")
+      }
+    >
+      {busy ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+      {done ? "Gedaan" : "Nog te doen"}
+    </button>
+  );
+}
+
+function CommentButton({
+  itemId,
+  name,
+  comment,
+}: {
+  itemId: string;
+  name: string;
+  comment: string | null;
+}) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState(comment ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      await setItemComment(itemId, text);
+      await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      toast.success("Comment opgeslagen");
+      setOpen(false);
+    } catch {
+      toast.error("Opslaan mislukt");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          setText(comment ?? "");
+          setOpen(true);
+        }}
+        className={
+          "inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-colors " +
+          (comment
+            ? "bg-primary/10 text-primary hover:bg-primary/15"
+            : "bg-secondary text-secondary-foreground hover:bg-secondary/80")
+        }
+      >
+        <MessageSquare className="size-3.5" />
+        {comment ? "Comment" : "Comment toevoegen"}
+      </button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Comment</DialogTitle>
+            <DialogDescription>{name}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <textarea
+              autoFocus
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Opmerking over dit product..."
+              rows={4}
+              className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+            />
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void submit()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+              Opslaan
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function DeleteItemButton({ itemId, name }: { itemId: string; name: string }) {
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+
+  const handleDelete = async () => {
+    if (!window.confirm(`"${name}" verwijderen? Dit kan niet ongedaan gemaakt worden.`)) return;
+    setBusy(true);
+    try {
+      await deleteItem(itemId);
+      await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      toast.success("Product verwijderd");
+    } catch {
+      toast.error("Verwijderen mislukt");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleDelete()}
+      disabled={busy}
+      aria-label={`Verwijder ${name}`}
+      className="flex shrink-0 items-center justify-center rounded-lg bg-destructive/10 px-3 py-2 text-destructive transition-colors hover:bg-destructive/15 disabled:opacity-60"
+    >
+      {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+    </button>
   );
 }
 

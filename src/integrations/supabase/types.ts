@@ -117,6 +117,8 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          done: boolean
+          comment: string | null
           name: string
           sort_order: number
           unit: string
@@ -126,6 +128,8 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          done?: boolean
+          comment?: string | null
           name: string
           sort_order?: number
           unit: string
@@ -135,6 +139,8 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          done?: boolean
+          comment?: string | null
           name?: string
           sort_order?: number
           unit?: string
