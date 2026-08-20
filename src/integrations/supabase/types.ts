@@ -14,60 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      count_snapshots: {
-        Row: {
-          id: string
-          label: string
-          taken_at: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          label: string
-          taken_at?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          label?: string
-          taken_at?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
       count_snapshot_rows: {
         Row: {
           id: string
-          snapshot_id: string
+          item_category: string
           item_id: string | null
           item_name: string
-          item_category: string
-          item_unit: string
           item_sort_order: number
+          item_unit: string
           location: string
           qty: number
+          snapshot_id: string
         }
         Insert: {
           id?: string
-          snapshot_id: string
+          item_category: string
           item_id?: string | null
           item_name: string
-          item_category: string
-          item_unit: string
           item_sort_order?: number
+          item_unit: string
           location: string
           qty?: number
+          snapshot_id: string
         }
         Update: {
           id?: string
-          snapshot_id?: string
+          item_category?: string
           item_id?: string | null
           item_name?: string
-          item_category?: string
-          item_unit?: string
           item_sort_order?: number
+          item_unit?: string
           location?: string
           qty?: number
+          snapshot_id?: string
         }
         Relationships: [
           {
@@ -76,8 +55,29 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "count_snapshots"
             referencedColumns: ["id"]
-          }
+          },
         ]
+      }
+      count_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          taken_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          taken_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          taken_at?: string
+        }
+        Relationships: []
       }
       counts: {
         Row: {
@@ -114,33 +114,33 @@ export type Database = {
       items: {
         Row: {
           category: string
+          comment: string | null
           created_at: string
+          done: boolean
           id: string
           image_url: string | null
-          done: boolean
-          comment: string | null
           name: string
           sort_order: number
           unit: string
         }
         Insert: {
           category: string
+          comment?: string | null
           created_at?: string
+          done?: boolean
           id?: string
           image_url?: string | null
-          done?: boolean
-          comment?: string | null
           name: string
           sort_order?: number
           unit: string
         }
         Update: {
           category?: string
+          comment?: string | null
           created_at?: string
+          done?: boolean
           id?: string
           image_url?: string | null
-          done?: boolean
-          comment?: string | null
           name?: string
           sort_order?: number
           unit?: string
