@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Radio,
 } from "lucide-react";
+import { Gamepad2, Popcorn, Lightbulb, Ticket, Glasses } from "lucide-react";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
 
