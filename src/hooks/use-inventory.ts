@@ -7,13 +7,17 @@ import type { Count, Item } from "@/lib/inventory";
 async function fetchInventory() {
   const [itemsRes, countsRes] = await Promise.all([
     supabase.from("items").select("*").order("sort_order"),
-    supabase.from("counts").select("id, item_id, location, qty, formula"),
+    supabase.from("counts").select("*"),
   ]);
   if (itemsRes.error) throw itemsRes.error;
   if (countsRes.error) throw countsRes.error;
   return {
     items: (itemsRes.data ?? []) as Item[],
-    counts: (countsRes.data ?? []).map((c) => ({ ...c, qty: Number(c.qty) })) as Count[],
+    counts: (countsRes.data ?? []).map((c) => ({
+      ...c,
+      qty: Number(c.qty),
+      formula: (c as { formula?: string | null }).formula ?? null,
+    })) as Count[],
   };
 }
 
