@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Camera,
   Check,
+  CheckSquare,
   History,
   ImageIcon,
   ImagePlus,
@@ -14,13 +15,16 @@ import {
   Minus,
   Plus,
   Search,
+  Square,
   Trash2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   addItem,
   deleteItem,
+  deleteItems,
   setCount,
   setItemComment,
   setItemDone,
@@ -34,7 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { evalFormula, getCategory, type Category } from "@/lib/inventory";
+import { evalFormula, getCategory, type Category, type Item } from "@/lib/inventory";
 import { useFormulaHistory } from "@/lib/formula-history";
 
 export const Route = createFileRoute("/count/$category")({
@@ -63,7 +67,12 @@ function CountScreen() {
   const { category } = Route.useParams();
   const cat = getCategory(category) as Category;
   const { data, isLoading } = useInventory();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"alle" | "nog_te_doen" | "gedaan">("alle");
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const items = useMemo(() => {
     const list = (data?.items ?? [])
@@ -73,11 +82,60 @@ function CountScreen() {
     return q ? list.filter((i) => i.name.toLowerCase().includes(q)) : list;
   }, [data, category, search]);
 
+  // Group LOS/DOOS variants of the same product into one card.
+  const groups = useMemo(() => {
+    const map = new Map<string, typeof items>();
+    for (const item of items) {
+      const arr = map.get(item.name);
+      if (arr) arr.push(item);
+      else map.set(item.name, [item]);
+    }
+    return Array.from(map.entries()).map(([name, units]) => ({
+      name,
+      units: units.sort((a, b) => a.sort_order - b.sort_order),
+    }));
+  }, [items]);
+
   const counts = data?.counts ?? [];
   const qtyOf = (itemId: string, loc: string) =>
     counts.find((c) => c.item_id === itemId && c.location === loc)?.qty ?? 0;
   const formulaOf = (itemId: string, loc: string) =>
     counts.find((c) => c.item_id === itemId && c.location === loc)?.formula ?? null;
+
+  const filteredGroups = groups.filter((g) => {
+    if (filter === "alle") return true;
+    const allDone = g.units.every((u) => u.done);
+    return filter === "gedaan" ? allDone : !allDone;
+  });
+
+  const toggleSelect = (groupName: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupName)) next.delete(groupName);
+      else next.add(groupName);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return;
+    if (!window.confirm(`${selected.size} product(en) verwijderen? Dit kan niet ongedaan gemaakt worden.`)) return;
+    setDeleting(true);
+    try {
+      const idsToDelete = groups
+        .filter((g) => selected.has(g.name))
+        .flatMap((g) => g.units.map((u) => u.id));
+      await deleteItems(idsToDelete);
+      await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      toast.success(`${selected.size} product(en) verwijderd`);
+      setSelected(new Set());
+      setSelectMode(false);
+    } catch {
+      toast.error("Verwijderen mislukt");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-28 md:max-w-6xl">
@@ -95,81 +153,215 @@ function CountScreen() {
             <p className="truncate text-xs opacity-70">{cat.locations.join(" · ")}</p>
           </div>
         </div>
-        <div className="relative mt-3 md:mt-0">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 opacity-60" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Zoek artikel..."
-            className="w-full rounded-xl bg-white/10 py-2.5 pl-9 pr-3 text-sm text-header-foreground placeholder:text-header-foreground/50 outline-none ring-primary/60 focus:ring-2"
-          />
+        <div className="mt-3 flex items-center gap-2 md:mt-0">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 opacity-60" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Zoek artikel..."
+              className="w-full rounded-xl bg-white/10 py-2.5 pl-9 pr-3 text-sm text-header-foreground placeholder:text-header-foreground/50 outline-none ring-primary/60 focus:ring-2"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectMode((v) => !v);
+              setSelected(new Set());
+            }}
+            className={
+              "flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors " +
+              (selectMode
+                ? "bg-white text-header"
+                : "bg-white/10 text-header-foreground hover:bg-white/20")
+            }
+          >
+            {selectMode ? <X className="size-4" /> : <CheckSquare className="size-4" />}
+            <span className="hidden sm:inline">{selectMode ? "Annuleer" : "Selecteer"}</span>
+          </button>
         </div>
       </header>
+
+      <div className="flex gap-2 overflow-x-auto px-3 pt-3 md:px-8">
+        {(
+          [
+            { key: "alle", label: "Alle" },
+            { key: "nog_te_doen", label: "Nog te doen" },
+            { key: "gedaan", label: "Gedaan" },
+          ] as const
+        ).map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            onClick={() => setFilter(f.key)}
+            className={
+              "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors " +
+              (filter === f.key
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80")
+            }
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
 
       <section className="space-y-3 px-3 pt-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 md:px-8 md:pt-6 xl:grid-cols-3">
         {isLoading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground md:col-span-full">
             <Loader2 className="size-6 animate-spin" />
           </div>
-        ) : items.length === 0 ? (
+        ) : filteredGroups.length === 0 ? (
           <p className="py-16 text-center text-sm text-muted-foreground md:col-span-full">
             Geen artikelen gevonden.
           </p>
         ) : (
-          items.map((item) => {
-            const total = cat.locations.reduce((s, loc) => s + qtyOf(item.id, loc), 0);
-            return (
-              <article
-                key={item.id}
-                className="rounded-2xl border border-border bg-card p-3.5 md:flex md:flex-col md:p-4 md:transition-shadow md:hover:shadow-md"
-              >
-                <ItemImage itemId={item.id} name={item.name} imageUrl={item.image_url} />
-
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h2 className="truncate text-sm font-semibold text-card-foreground">
-                      {item.name}
-                    </h2>
-                    <span className="mt-1 inline-block rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary-foreground">
-                      {item.unit}
-                    </span>
-                  </div>
-                  <DoneToggle itemId={item.id} done={item.done} />
-                </div>
-
-                <div className="mt-3 space-y-2 md:flex-1">
-                  {cat.locations.map((loc) => (
-                    <LocationRow
-                      key={loc}
-                      itemId={item.id}
-                      location={loc}
-                      qty={qtyOf(item.id, loc)}
-                      formula={formulaOf(item.id, loc)}
-                    />
-                  ))}
-                </div>
-
-                <div className="mt-3 flex items-center justify-between border-t border-border pt-2.5">
-                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Totaal
-                  </span>
-                  <span className="text-base font-bold tabular-nums text-card-foreground">
-                    {total} <span className="text-xs font-medium text-muted-foreground">{item.unit}</span>
-                  </span>
-                </div>
-
-                <div className="mt-2 flex items-center gap-2">
-                  <CommentButton itemId={item.id} name={item.name} comment={item.comment} />
-                  <DeleteItemButton itemId={item.id} name={item.name} />
-                </div>
-              </article>
-            );
-          })
+          filteredGroups.map((group) => (
+            <ProductGroupCard
+              key={group.name}
+              group={group}
+              locations={cat.locations}
+              qtyOf={qtyOf}
+              formulaOf={formulaOf}
+              selectMode={selectMode}
+              selected={selected.has(group.name)}
+              onToggleSelect={() => toggleSelect(group.name)}
+            />
+          ))
         )}
       </section>
 
-      <AddItemBar category={category} units={cat.units} />
+      {selectMode && selected.size > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-3 py-3 backdrop-blur md:px-8">
+          <div className="mx-auto flex w-full max-w-md items-center gap-2 md:max-w-6xl">
+            <span className="flex-1 text-sm font-medium text-foreground">
+              {selected.size} geselecteerd
+            </span>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => void handleBulkDelete()}
+              className="flex items-center gap-2 rounded-xl bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
+            >
+              {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+              Verwijder
+            </button>
+          </div>
+        </div>
+      ) : (
+        <AddItemBar category={category} units={cat.units} />
+      )}
     </main>
+  );
+}
+
+function ProductGroupCard({
+  group,
+  locations,
+  qtyOf,
+  formulaOf,
+  selectMode,
+  selected,
+  onToggleSelect,
+}: {
+  group: { name: string; units: Item[] };
+  locations: string[];
+  qtyOf: (itemId: string, loc: string) => number;
+  formulaOf: (itemId: string, loc: string) => string | null;
+  selectMode: boolean;
+  selected: boolean;
+  onToggleSelect: () => void;
+}) {
+  const firstWithImage = group.units.find((u: Item) => u.image_url) ?? group.units[0]!;
+  const multiUnit = group.units.length > 1;
+
+  return (
+    <article
+      onClick={selectMode ? onToggleSelect : undefined}
+      className={
+        "rounded-2xl border bg-card p-3.5 transition-all md:col-span-1 xl:col-span-1 md:p-4 " +
+        (multiUnit ? "md:col-span-2 xl:col-span-2 " : "") +
+        (selectMode ? "cursor-pointer active:scale-[0.99] " : "") +
+        (selected ? "border-primary ring-2 ring-primary/40" : "border-border")
+      }
+    >
+      <div className="flex items-start gap-3">
+        {selectMode ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect();
+            }}
+            aria-label="Selecteer product"
+            className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md border border-input text-primary"
+          >
+            {selected ? <CheckSquare className="size-5 fill-primary/10" /> : <Square className="size-5" />}
+          </button>
+        ) : null}
+        <ItemImage
+          itemId={firstWithImage.id}
+          name={group.name}
+          imageUrl={firstWithImage.image_url}
+        />
+      </div>
+
+      <h2 className="mt-1 truncate text-sm font-semibold text-card-foreground">{group.name}</h2>
+
+      <div
+        className={
+          "mt-3 gap-3 " + (multiUnit ? "grid grid-cols-1 sm:grid-cols-2" : "grid grid-cols-1")
+        }
+      >
+        {group.units.map((unit: Item) => {
+          const total = locations.reduce((s, loc) => s + qtyOf(unit.id, loc), 0);
+          return (
+            <div
+              key={unit.id}
+              className={
+                "rounded-xl p-2.5 " + (multiUnit ? "border border-border bg-secondary/20" : "")
+              }
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-block rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary-foreground">
+                  {unit.unit}
+                </span>
+                {!selectMode ? <DoneToggle itemId={unit.id} done={unit.done} /> : null}
+              </div>
+
+              <div className="mt-2 space-y-2">
+                {locations.map((loc) => (
+                  <LocationRow
+                    key={loc}
+                    itemId={unit.id}
+                    location={loc}
+                    qty={qtyOf(unit.id, loc)}
+                    formula={formulaOf(unit.id, loc)}
+                  />
+                ))}
+              </div>
+
+              <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Totaal
+                </span>
+                <span className="text-base font-bold tabular-nums text-card-foreground">
+                  {total}{" "}
+                  <span className="text-xs font-medium text-muted-foreground">{unit.unit}</span>
+                </span>
+              </div>
+
+              {!selectMode ? (
+                <div className="mt-2 flex items-center gap-2">
+                  <CommentButton itemId={unit.id} name={`${group.name} (${unit.unit})`} comment={unit.comment} />
+                  <DeleteItemButton itemId={unit.id} name={`${group.name} (${unit.unit})`} />
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </article>
   );
 }
 

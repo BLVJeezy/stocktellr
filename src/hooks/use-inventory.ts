@@ -77,6 +77,12 @@ export async function deleteItem(itemId: string) {
   if (error) throw error;
 }
 
+export async function deleteItems(itemIds: string[]) {
+  if (itemIds.length === 0) return;
+  const { error } = await supabase.from("items").delete().in("id", itemIds);
+  if (error) throw error;
+}
+
 export async function setItemDone(itemId: string, done: boolean) {
   const { error } = await supabase.from("items").update({ done }).eq("id", itemId);
   if (error) throw error;
