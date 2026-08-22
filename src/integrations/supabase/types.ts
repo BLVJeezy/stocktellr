@@ -141,6 +141,8 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          pack_size: string | null
+          units_per_pack: number | null
           sort_order: number
           unit: string
         }
@@ -152,6 +154,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          pack_size?: string | null
+          units_per_pack?: number | null
           sort_order?: number
           unit: string
         }
@@ -163,6 +167,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          pack_size?: string | null
+          units_per_pack?: number | null
           sort_order?: number
           unit?: string
         }

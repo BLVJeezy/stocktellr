@@ -57,6 +57,20 @@ export const CATEGORIES: Category[] = [
     units: ["DOOS", "LOS"],
   },
   {
+    key: "conway",
+    name: "Conway Dranken",
+    short: "CW",
+    locations: ["Frigo", "Berging"],
+    units: ["TRAY", "LOS"],
+  },
+  {
+    key: "conway_snacks",
+    name: "Conway Snacks & IJs",
+    short: "CWS",
+    locations: ["Toog", "Berging"],
+    units: ["DOOS", "LOS"],
+  },
+  {
     key: "lampen",
     name: "Long Life Lampen (Xenon)",
     short: "LMP",
@@ -92,6 +106,8 @@ export type Item = {
   image_url: string | null;
   done: boolean;
   comment: string | null;
+  pack_size: string | null;
+  units_per_pack: number | null;
 };
 
 export type Count = {

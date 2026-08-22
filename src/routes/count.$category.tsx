@@ -383,6 +383,8 @@ function ProductGroupCard({
                     location={loc}
                     qty={qtyOf(unit.id, loc)}
                     formula={formulaOf(unit.id, loc)}
+                    multiplier={unit.units_per_pack ?? 1}
+                    packLabel={unit.pack_size}
                   />
                 ))}
               </div>
@@ -848,11 +850,15 @@ function LocationRow({
   location,
   qty,
   formula,
+  multiplier = 1,
+  packLabel,
 }: {
   itemId: string;
   location: string;
   qty: number;
   formula: string | null;
+  multiplier?: number;
+  packLabel?: string | null;
 }) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<string | null>(null);
@@ -860,6 +866,7 @@ function LocationRow({
   const [showHistory, setShowHistory] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { history, load: loadHistory, remember } = useFormulaHistory(itemId, location);
+  const mult = multiplier && multiplier > 0 ? multiplier : 1;
 
   const save = async (next: number, rawFormula: string | null) => {
     const value = Number.isFinite(next) && next > 0 ? next : 0;
@@ -880,8 +887,8 @@ function LocationRow({
       setShowHistory(false);
       return void save(0, null);
     }
-    const result = evalFormula(raw);
-    if (result === null) {
+    const typed = evalFormula(raw);
+    if (typed === null) {
       // Keep the typed text visible and marked invalid so the user can correct it.
       setError(`"${raw}" is geen geldige formule. Gebruik alleen cijfers en + - * / ( )`);
       // Re-focus so the user can fix it immediately without losing their place.
@@ -892,8 +899,9 @@ function LocationRow({
     setError(null);
     remember(raw);
     setShowHistory(false);
-    // Keep the raw formula text visible in the box; the computed sum lives in the Totaal box.
-    await save(result, raw);
+    // The typed number is "packs" (bv. 1 doos) — multiply by the known units per pack,
+    // so the stored total is real units. The box itself keeps showing the raw typed formula.
+    await save(typed * mult, raw);
   };
 
   // Live preview of the typed formula, e.g. "10+20+56" → 86.
@@ -901,17 +909,24 @@ function LocationRow({
     const raw = (draft ?? "").trim();
     if (raw === "" || !/[+\-*/(]/.test(raw)) return null;
     const result = evalFormula(raw);
-    return result === null ? { valid: false } : { valid: true, result };
+    return result === null ? ({ valid: false } as const) : ({ valid: true, result } as const);
   }, [draft]);
 
   const showError = error ?? (preview && !preview.valid ? "Ongeldige formule — controleer de tekens" : null);
-  const liveTotal = preview?.valid ? preview.result : qty;
+  const liveTotal = preview?.valid ? preview.result * mult : qty;
 
   return (
     <div>
-      <span className="mb-1 block truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        {location}
-      </span>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {location}
+        </span>
+        {mult > 1 ? (
+          <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+            1 = {mult} st.
+          </span>
+        ) : null}
+      </div>
       <div className="flex items-stretch gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-input bg-background pl-1">
           <button
