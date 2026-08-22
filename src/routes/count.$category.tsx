@@ -73,6 +73,7 @@ function CountScreen() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"alle" | "nog_te_doen" | "gedaan">("alle");
+  const [unitFilter, setUnitFilter] = useState<"alle" | "LOS" | "DOOS">("alle");
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
@@ -108,11 +109,18 @@ function CountScreen() {
   const formulaOf = (itemId: string, loc: string) =>
     counts.find((c) => c.item_id === itemId && c.location === loc)?.formula ?? null;
 
-  const filteredGroups = groups.filter((g) => {
-    if (filter === "alle") return true;
-    const allDone = g.units.every((u) => u.done);
-    return filter === "gedaan" ? allDone : !allDone;
-  });
+  const filteredGroups = groups
+    .map((g) => {
+      if (unitFilter === "alle") return g;
+      const units = g.units.filter((u) => u.unit.toUpperCase() === unitFilter);
+      return units.length > 0 ? { ...g, units } : null;
+    })
+    .filter((g): g is NonNullable<typeof g> => g !== null)
+    .filter((g) => {
+      if (filter === "alle") return true;
+      const allDone = g.units.every((u) => u.done);
+      return filter === "gedaan" ? allDone : !allDone;
+    });
 
   const toggleSelect = (groupName: string) => {
     setSelected((prev) => {
@@ -212,7 +220,31 @@ function CountScreen() {
         ))}
       </div>
 
-      <section className="space-y-3 px-3 pt-4 md:mx-auto md:max-w-4xl md:space-y-3 md:px-8 md:pt-6">
+      <div className="flex gap-2 overflow-x-auto px-3 pt-2 md:px-8">
+        {(
+          [
+            { key: "alle", label: "Los + Doos" },
+            { key: "LOS", label: "Los" },
+            { key: "DOOS", label: "Doos" },
+          ] as const
+        ).map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            onClick={() => setUnitFilter(f.key)}
+            className={
+              "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors " +
+              (unitFilter === f.key
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-transparent text-muted-foreground hover:bg-secondary/50")
+            }
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      <section className="space-y-3 px-3 pt-4 md:mx-auto md:grid md:max-w-6xl md:grid-cols-2 md:gap-4 md:space-y-0 md:px-8 md:pt-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground md:col-span-full">
             <Loader2 className="size-6 animate-spin" />
