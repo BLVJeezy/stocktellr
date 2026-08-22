@@ -159,18 +159,11 @@ function Dashboard() {
             Iedereen telt tegelijk — alles synchroniseert vanzelf.
           </p>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-2 md:mt-0 md:shrink-0 md:grid-cols-6">
-          <Link
-            to="/totaal"
-            className="col-span-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-header transition-transform active:scale-[0.98] md:col-span-1 md:hover:brightness-95"
-          >
-            <Table2 className="size-4" />
-            Totaal
-          </Link>
+        <div className="mt-5 grid grid-cols-2 gap-2 md:mt-0 md:w-[26rem] md:shrink-0 md:space-y-2">
           <button
             onClick={handleSaveSnapshot}
             disabled={saveSnapshot.isPending || isLoading}
-            className="col-span-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60 md:col-span-1 md:hover:brightness-110"
+            className="col-span-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60 md:col-span-1 md:rounded-2xl md:py-3.5 md:hover:brightness-110"
           >
             {saveSnapshot.isPending ? (
               <Loader2 className="size-4 animate-spin" />
@@ -180,34 +173,43 @@ function Dashboard() {
             Bewaar telling
           </button>
           <Link
-            to="/history"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98]"
+            to="/totaal"
+            className="col-span-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-header transition-transform active:scale-[0.98] md:col-span-1 md:rounded-2xl md:py-3.5 md:hover:brightness-95"
           >
-            <History className="size-4" />
-            Historiek
+            <Table2 className="size-4" />
+            Totaal
           </Link>
-          <button
-            onClick={handleExportPdf}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98]"
-          >
-            <FileText className="size-4" />
-            PDF
-          </button>
-          <button
-            onClick={handleExport}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98]"
-          >
-            <Download className="size-4" />
-            CSV
-          </button>
-          <button
-            onClick={() => void handleReset()}
-            disabled={resetting || isLoading}
-            className="col-span-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-destructive/90 px-4 py-3 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive disabled:opacity-60 md:col-span-1"
-          >
-            {resetting ? <Loader2 className="size-4 animate-spin" /> : <RotateCcw className="size-4" />}
-            Reset alles naar 0
-          </button>
+          <div className="col-span-2 flex flex-wrap gap-2 md:gap-2">
+            <Link
+              to="/history"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/10 px-3 py-2.5 text-xs font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98] md:rounded-xl"
+            >
+              <History className="size-3.5" />
+              Historiek
+            </Link>
+            <button
+              onClick={handleExportPdf}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/10 px-3 py-2.5 text-xs font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98] md:rounded-xl"
+            >
+              <FileText className="size-3.5" />
+              PDF
+            </button>
+            <button
+              onClick={handleExport}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/10 px-3 py-2.5 text-xs font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98] md:rounded-xl"
+            >
+              <Download className="size-3.5" />
+              CSV
+            </button>
+            <button
+              onClick={() => void handleReset()}
+              disabled={resetting || isLoading}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-destructive/80 px-3 py-2.5 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive active:scale-[0.98] disabled:opacity-60 md:rounded-xl"
+            >
+              {resetting ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
+              Reset
+            </button>
+          </div>
         </div>
       </header>
 
