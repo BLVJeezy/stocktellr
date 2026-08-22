@@ -206,7 +206,7 @@ function CountScreen() {
         ))}
       </div>
 
-      <section className="space-y-3 px-3 pt-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 md:px-8 md:pt-6 xl:grid-cols-3">
+      <section className="space-y-3 px-3 pt-4 md:mx-auto md:max-w-4xl md:space-y-3 md:px-8 md:pt-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground md:col-span-full">
             <Loader2 className="size-6 animate-spin" />
@@ -279,8 +279,7 @@ function ProductGroupCard({
     <article
       onClick={selectMode ? onToggleSelect : undefined}
       className={
-        "rounded-2xl border bg-card p-3.5 transition-all md:col-span-1 xl:col-span-1 md:p-4 " +
-        (multiUnit ? "md:col-span-2 xl:col-span-2 " : "") +
+        "rounded-2xl border bg-card p-4 transition-all md:p-5 " +
         (selectMode ? "cursor-pointer active:scale-[0.99] " : "") +
         (selected ? "border-primary ring-2 ring-primary/40" : "border-border")
       }
@@ -306,30 +305,26 @@ function ProductGroupCard({
         />
       </div>
 
-      <h2 className="mt-1 truncate text-sm font-semibold text-card-foreground">{group.name}</h2>
+      <h2 className="mt-1 text-base font-bold text-card-foreground md:text-lg">{group.name}</h2>
 
-      <div
-        className={
-          "mt-3 gap-3 " + (multiUnit ? "grid grid-cols-1 sm:grid-cols-2" : "grid grid-cols-1")
-        }
-      >
+      <div className={"mt-3 grid gap-3 " + (multiUnit ? "grid-cols-2" : "grid-cols-1")}>
         {group.units.map((unit: Item) => {
           const total = locations.reduce((s, loc) => s + qtyOf(unit.id, loc), 0);
           return (
             <div
               key={unit.id}
               className={
-                "rounded-xl p-2.5 " + (multiUnit ? "border border-border bg-secondary/20" : "")
+                "rounded-xl p-3 md:p-4 " + (multiUnit ? "border-2 border-border bg-secondary/20" : "")
               }
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="inline-block rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary-foreground">
+                <span className="inline-block rounded-md bg-secondary px-2 py-1 text-xs font-bold uppercase tracking-wide text-secondary-foreground md:text-sm">
                   {unit.unit}
                 </span>
                 {!selectMode ? <DoneToggle itemId={unit.id} done={unit.done} /> : null}
               </div>
 
-              <div className="mt-2 space-y-2">
+              <div className="mt-2.5 space-y-2.5">
                 {locations.map((loc) => (
                   <LocationRow
                     key={loc}
@@ -341,11 +336,11 @@ function ProductGroupCard({
                 ))}
               </div>
 
-              <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2">
+              <div className="mt-3 flex items-center justify-between border-t border-border pt-2.5">
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Totaal
                 </span>
-                <span className="text-base font-bold tabular-nums text-card-foreground">
+                <span className="text-lg font-bold tabular-nums text-card-foreground">
                   {total}{" "}
                   <span className="text-xs font-medium text-muted-foreground">{unit.unit}</span>
                 </span>
