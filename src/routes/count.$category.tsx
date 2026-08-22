@@ -561,11 +561,11 @@ function LocationRow({
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-1.5">
-          <span className="w-14 shrink-0 truncate text-xs font-medium text-muted-foreground">
-            {location}
-          </span>
+      <span className="mb-1 block truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {location}
+      </span>
+      <div className="flex items-stretch gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-input bg-background pl-1">
           <button
             type="button"
             aria-label={`Min ${location}`}
@@ -574,7 +574,7 @@ function LocationRow({
               setDraft(null);
               void save(qty - 1);
             }}
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition-transform active:scale-95"
+            className="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-secondary-foreground transition-transform active:scale-95"
           >
             <Minus className="size-4" />
           </button>
@@ -583,7 +583,7 @@ function LocationRow({
             type="text"
             inputMode="text"
             aria-invalid={showError ? true : undefined}
-            placeholder="10+20+56"
+            placeholder="Formule, bv. 10+20+56"
             title="Tip: tel op met een formule, bv. 10+20+56"
             value={draft ?? String(qty)}
             onChange={(e) => {
@@ -608,10 +608,8 @@ function LocationRow({
               }
             }}
             className={
-              "h-9 w-20 min-w-0 flex-1 rounded-lg border bg-background text-center text-sm font-semibold tabular-nums text-foreground outline-none transition-colors focus:ring-2 " +
-              (showError
-                ? "border-destructive text-destructive ring-2 ring-destructive/30 focus:border-destructive focus:ring-destructive/40"
-                : "border-input focus:border-ring focus:ring-ring/30")
+              "h-10 min-w-0 flex-1 border-0 bg-transparent px-1 text-center text-sm font-semibold tabular-nums text-foreground outline-none " +
+              (showError ? "text-destructive" : "")
             }
           />
           <button
@@ -622,16 +620,16 @@ function LocationRow({
               setDraft(null);
               void save(qty + 1);
             }}
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform active:scale-95"
+            className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-transform active:scale-95"
           >
             <Plus className="size-4" />
           </button>
         </div>
-        <div className="flex shrink-0 flex-col items-end rounded-lg bg-secondary/50 px-2.5 py-1 leading-tight">
-          <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="flex w-16 shrink-0 flex-col items-center justify-center rounded-lg border border-primary/30 bg-primary/10 leading-tight">
+          <span className="text-[9px] font-medium uppercase tracking-wide text-primary/70">
             Totaal
           </span>
-          <span className="text-sm font-bold tabular-nums text-card-foreground">
+          <span className="text-base font-bold tabular-nums text-primary">
             {liveTotal}
           </span>
         </div>

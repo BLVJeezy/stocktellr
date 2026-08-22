@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Boxes,
+  Camera,
   Candy,
   Download,
   IceCream2,
@@ -14,10 +16,11 @@ import {
 } from "lucide-react";
 import { Gamepad2, Popcorn, Lightbulb, Ticket, Glasses } from "lucide-react";
 import { FileText } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useInventory } from "@/hooks/use-inventory";
+import { useCategoryBanners, uploadCategoryBanner } from "@/hooks/use-category-banners";
 import { useSaveSnapshot } from "@/hooks/use-snapshots";
 import { CATEGORIES, toCsv } from "@/lib/inventory";
 import { exportInventoryPdf } from "@/lib/pdf-export";
@@ -58,6 +61,7 @@ const ICONS: Record<string, typeof Candy> = {
 
 function Dashboard() {
   const { data, isLoading } = useInventory();
+  const { data: banners } = useCategoryBanners();
   const saveSnapshot = useSaveSnapshot();
   const [defaultLabel] = useState(() => {
     const now = new Date();
@@ -180,42 +184,133 @@ function Dashboard() {
             const counted = catItems.filter((i) => totalFor(i.id) > 0).length;
             const pct = catItems.length ? Math.round((counted / catItems.length) * 100) : 0;
             return (
-              <Link
+              <CategoryTile
                 key={cat.key}
-                to="/count/$category"
-                params={{ category: cat.key }}
-                className="block rounded-2xl border border-border bg-card p-4 shadow-sm transition-all active:scale-[0.99] md:p-5 md:hover:-translate-y-0.5 md:hover:border-primary/40 md:hover:shadow-md"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-                    <Icon className="size-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-base font-semibold text-card-foreground">
-                      {cat.name}
-                    </h2>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {cat.locations.join(" · ")} — {cat.units.join("/")}
-                    </p>
-                  </div>
-                  <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
-                </div>
-                <div className="mt-3 flex items-center gap-3">
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-pending">
-                    <div
-                      className="h-full rounded-full bg-success transition-all"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                    {counted}/{catItems.length}
-                  </span>
-                </div>
-              </Link>
+                categoryKey={cat.key}
+                name={cat.name}
+                locations={cat.locations}
+                units={cat.units}
+                Icon={Icon}
+                counted={counted}
+                total={catItems.length}
+                pct={pct}
+                bannerUrl={banners?.[cat.key] ?? null}
+              />
             );
           })
         )}
       </section>
     </main>
+  );
+}
+
+function CategoryTile({
+  categoryKey,
+  name,
+  locations,
+  units,
+  Icon,
+  counted,
+  total,
+  pct,
+  bannerUrl,
+}: {
+  categoryKey: string;
+  name: string;
+  locations: string[];
+  units: string[];
+  Icon: typeof Package;
+  counted: number;
+  total: number;
+  pct: number;
+  bannerUrl: string | null;
+}) {
+  const queryClient = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      await uploadCategoryBanner(categoryKey, file);
+      setFailed(false);
+      await queryClient.invalidateQueries({ queryKey: ["category-banners"] });
+      toast.success("Bannerfoto bijgewerkt");
+    } catch {
+      toast.error("Uploaden mislukt");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Link
+      to="/count/$category"
+      params={{ category: categoryKey }}
+      className="block overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-primary/40 md:hover:shadow-md"
+    >
+      <div className="relative flex h-24 w-full items-center justify-center overflow-hidden bg-accent/60">
+        {bannerUrl && !failed ? (
+          <img
+            src={bannerUrl}
+            alt={name}
+            loading="lazy"
+            className="h-full w-full object-cover"
+            onError={() => setFailed(true)}
+          />
+        ) : (
+          <Icon className="size-8 text-accent-foreground/40" />
+        )}
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            void handleFile(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
+        <button
+          type="button"
+          disabled={busy}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileRef.current?.click();
+          }}
+          aria-label={`Bannerfoto instellen voor ${name}`}
+          className="absolute bottom-1.5 right-1.5 flex size-8 items-center justify-center rounded-lg bg-card/90 text-card-foreground shadow-sm ring-1 ring-border transition-colors hover:bg-card disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+        </button>
+      </div>
+
+      <div className="p-4 md:p-5">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-base font-semibold text-card-foreground">{name}</h2>
+            <p className="truncate text-xs text-muted-foreground">
+              {locations.join(" · ")} — {units.join("/")}
+            </p>
+          </div>
+          <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+        </div>
+        <div className="mt-3 flex items-center gap-3">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-pending">
+            <div
+              className="h-full rounded-full bg-success transition-all"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <span className="text-xs font-medium tabular-nums text-muted-foreground">
+            {counted}/{total}
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }
