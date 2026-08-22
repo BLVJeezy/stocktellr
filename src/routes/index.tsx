@@ -14,6 +14,7 @@ import {
   History,
   RotateCcw,
   Save,
+  Table2,
 } from "lucide-react";
 import { Gamepad2, Popcorn, Lightbulb, Ticket, Glasses } from "lucide-react";
 import { FileText } from "lucide-react";
@@ -158,7 +159,14 @@ function Dashboard() {
             Iedereen telt tegelijk — alles synchroniseert vanzelf.
           </p>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-2 md:mt-0 md:shrink-0 md:grid-cols-5">
+        <div className="mt-5 grid grid-cols-2 gap-2 md:mt-0 md:shrink-0 md:grid-cols-6">
+          <Link
+            to="/totaal"
+            className="col-span-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-header transition-transform active:scale-[0.98] md:col-span-1 md:hover:brightness-95"
+          >
+            <Table2 className="size-4" />
+            Totaal
+          </Link>
           <button
             onClick={handleSaveSnapshot}
             disabled={saveSnapshot.isPending || isLoading}

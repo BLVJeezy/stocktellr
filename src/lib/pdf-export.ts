@@ -91,6 +91,38 @@ export function exportSnapshotPdf(label: string, takenAt: string, rows: Snapshot
   doc.save(`${safeName || "telling"}.pdf`);
 }
 
+/** Builds a single-page overview PDF: Product / Los / Doos / Totaal, across all categories. */
+export function exportTotalsPdf(
+  rows: { categoryName: string; productName: string; los: number; doos: number; totaal: number }[]
+) {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const date = new Date().toLocaleDateString("nl-BE");
+
+  doc.setFontSize(16);
+  doc.text("Totaaloverzicht — Los + Doos per product", 40, 46);
+  doc.setFontSize(9);
+  doc.setTextColor(120);
+  doc.text(date, 40, 62);
+  doc.setTextColor(0);
+
+  const grandTotal = rows.reduce((s, r) => s + r.totaal, 0);
+  const body = rows.map((r) => [r.categoryName, r.productName, String(r.los), String(r.doos), String(r.totaal)]);
+
+  autoTable(doc, {
+    startY: 76,
+    head: [["Categorie", "Product", "Los", "Doos", "Totaal"]],
+    body,
+    foot: [[{ content: "Grand totaal", colSpan: 4 }, String(grandTotal)]],
+    styles: { fontSize: 8, cellPadding: 4 },
+    headStyles: { fillColor: [39, 58, 46], textColor: 255 },
+    footStyles: { fillColor: [231, 240, 233], textColor: 20, fontStyle: "bold" },
+    columnStyles: { 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" } },
+    margin: { left: 40, right: 40, bottom: 40 },
+  });
+
+  doc.save("totaaloverzicht.pdf");
+}
+
 /** Builds a per-category PDF report with the formulas used and totals. */
 export function exportInventoryPdf(items: Item[], counts: Count[]) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as TotaalRouteImport } from './routes/totaal'
 import { Route as CountCategoryRouteImport } from './routes/count.$category'
 import { Route as HistorySnapshotIdRouteImport } from './routes/history.$snapshotId'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TotaalRoute = TotaalRouteImport.update({
+  id: '/totaal',
+  path: '/totaal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CountCategoryRoute = CountCategoryRouteImport.update({
@@ -38,12 +44,14 @@ const HistorySnapshotIdRoute = HistorySnapshotIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/history': typeof HistoryRouteWithChildren
+  '/totaal': typeof TotaalRoute
   '/count/$category': typeof CountCategoryRoute
   '/history/$snapshotId': typeof HistorySnapshotIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/history': typeof HistoryRouteWithChildren
+  '/totaal': typeof TotaalRoute
   '/count/$category': typeof CountCategoryRoute
   '/history/$snapshotId': typeof HistorySnapshotIdRoute
 }
@@ -51,21 +59,29 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/history': typeof HistoryRouteWithChildren
+  '/totaal': typeof TotaalRoute
   '/count/$category': typeof CountCategoryRoute
   '/history/$snapshotId': typeof HistorySnapshotIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/history' | '/count/$category' | '/history/$snapshotId'
+  fullPaths:
+    '/' | '/history' | '/totaal' | '/count/$category' | '/history/$snapshotId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/history' | '/count/$category' | '/history/$snapshotId'
+  to: '/' | '/history' | '/totaal' | '/count/$category' | '/history/$snapshotId'
   id:
-    '__root__' | '/' | '/history' | '/count/$category' | '/history/$snapshotId'
+    | '__root__'
+    | '/'
+    | '/history'
+    | '/totaal'
+    | '/count/$category'
+    | '/history/$snapshotId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HistoryRoute: typeof HistoryRouteWithChildren
+  TotaalRoute: typeof TotaalRoute
   CountCategoryRoute: typeof CountCategoryRoute
 }
 
@@ -83,6 +99,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/totaal': {
+      id: '/totaal'
+      path: '/totaal'
+      fullPath: '/totaal'
+      preLoaderRoute: typeof TotaalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/count/$category': {
@@ -116,6 +139,7 @@ const HistoryRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HistoryRoute: HistoryRouteWithChildren,
+  TotaalRoute: TotaalRoute,
   CountCategoryRoute: CountCategoryRoute,
 }
 export const routeTree = rootRouteImport
