@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/image-compress";
 import type { Count, Item } from "@/lib/inventory";
 
 async function fetchInventory() {
@@ -83,6 +84,25 @@ export async function deleteItems(itemIds: string[]) {
   if (error) throw error;
 }
 
+export async function renameItems(itemIds: string[], newName: string) {
+  const trimmed = newName.trim();
+  if (!trimmed || itemIds.length === 0) return;
+  const { error } = await supabase.from("items").update({ name: trimmed }).in("id", itemIds);
+  if (error) throw error;
+}
+
+export async function moveItemsToCategory(itemIds: string[], newCategory: string) {
+  if (itemIds.length === 0) return;
+  const { error } = await supabase.from("items").update({ category: newCategory }).in("id", itemIds);
+  if (error) throw error;
+}
+
+export async function resetAllCounts() {
+  // Delete every saved count so every product goes back to 0 across all locations.
+  const { error } = await supabase.from("counts").delete().not("id", "is", null);
+  if (error) throw error;
+}
+
 export async function setItemDone(itemId: string, done: boolean) {
   const { error } = await supabase.from("items").update({ done }).eq("id", itemId);
   if (error) throw error;
@@ -99,12 +119,13 @@ export async function setItemComment(itemId: string, comment: string) {
 const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
 
 export async function uploadItemImage(itemId: string, file: File) {
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-  const path = `${itemId}/${Date.now()}.${ext || "jpg"}`;
+  const compressed = await compressImage(file);
+  const ext = "jpg";
+  const path = `${itemId}/${Date.now()}.${ext}`;
 
   const { error: uploadError } = await supabase.storage
     .from("product-images")
-    .upload(path, file, { contentType: file.type || "image/jpeg", upsert: true });
+    .upload(path, compressed, { contentType: compressed.type || "image/jpeg", upsert: true });
   if (uploadError) throw uploadError;
 
   const { data: signed, error: signError } = await supabase.storage

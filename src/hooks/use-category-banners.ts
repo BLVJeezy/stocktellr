@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/image-compress";
 
 export function useCategoryBanners() {
   const queryClient = useQueryClient();
@@ -39,12 +40,12 @@ export function useCategoryBanners() {
 const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
 
 export async function uploadCategoryBanner(category: string, file: File) {
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-  const path = `category-banners/${category}/${Date.now()}.${ext || "jpg"}`;
+  const compressed = await compressImage(file, { maxDimension: 1200, quality: 0.85 });
+  const path = `category-banners/${category}/${Date.now()}.jpg`;
 
   const { error: uploadError } = await supabase.storage
     .from("product-images")
-    .upload(path, file, { contentType: file.type || "image/jpeg", upsert: true });
+    .upload(path, compressed, { contentType: compressed.type || "image/jpeg", upsert: true });
   if (uploadError) throw uploadError;
 
   const { data: signed, error: signError } = await supabase.storage

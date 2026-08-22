@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -13,6 +13,7 @@ import {
   Loader2,
   MessageSquare,
   Minus,
+  Pencil,
   Plus,
   Search,
   Square,
@@ -25,6 +26,8 @@ import {
   addItem,
   deleteItem,
   deleteItems,
+  moveItemsToCategory,
+  renameItems,
   setCount,
   setItemComment,
   setItemDone,
@@ -38,7 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { evalFormula, getCategory, type Category, type Item } from "@/lib/inventory";
+import { CATEGORIES, evalFormula, getCategory, type Category, type Item } from "@/lib/inventory";
 import { useFormulaHistory } from "@/lib/formula-history";
 
 export const Route = createFileRoute("/count/$category")({
@@ -220,6 +223,7 @@ function CountScreen() {
             <ProductGroupCard
               key={group.name}
               group={group}
+              categoryKey={category}
               locations={cat.locations}
               qtyOf={qtyOf}
               formulaOf={formulaOf}
@@ -257,6 +261,7 @@ function CountScreen() {
 
 function ProductGroupCard({
   group,
+  categoryKey,
   locations,
   qtyOf,
   formulaOf,
@@ -265,6 +270,7 @@ function ProductGroupCard({
   onToggleSelect,
 }: {
   group: { name: string; units: Item[] };
+  categoryKey: string;
   locations: string[];
   qtyOf: (itemId: string, loc: string) => number;
   formulaOf: (itemId: string, loc: string) => string | null;
@@ -305,7 +311,17 @@ function ProductGroupCard({
         />
       </div>
 
-      <h2 className="mt-1 text-base font-bold text-card-foreground md:text-lg">{group.name}</h2>
+      <div className="mt-1 flex items-start justify-between gap-2">
+        <h2 className="min-w-0 flex-1 text-base font-bold text-card-foreground md:text-lg">
+          {group.name}
+        </h2>
+        {!selectMode ? (
+          <EditProductButton
+            categoryKey={categoryKey}
+            group={group}
+          />
+        ) : null}
+      </div>
 
       <div className={"mt-3 grid gap-3 " + (multiUnit ? "grid-cols-2" : "grid-cols-1")}>
         {group.units.map((unit: Item) => {
@@ -357,6 +373,108 @@ function ProductGroupCard({
         })}
       </div>
     </article>
+  );
+}
+
+function EditProductButton({
+  categoryKey,
+  group,
+}: {
+  categoryKey: string;
+  group: { name: string; units: Item[] };
+}) {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(group.name);
+  const [targetCategory, setTargetCategory] = useState(categoryKey);
+  const [saving, setSaving] = useState(false);
+
+  const itemIds = group.units.map((u) => u.id);
+
+  const submit = async () => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    try {
+      if (trimmed !== group.name) {
+        await renameItems(itemIds, trimmed);
+      }
+      const categoryChanged = targetCategory !== categoryKey;
+      if (categoryChanged) {
+        await moveItemsToCategory(itemIds, targetCategory);
+      }
+      await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      toast.success("Product bijgewerkt");
+      setOpen(false);
+      if (categoryChanged) {
+        void navigate({ to: "/count/$category", params: { category: targetCategory } });
+      }
+    } catch {
+      toast.error("Opslaan mislukt");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          setName(group.name);
+          setTargetCategory(categoryKey);
+          setOpen(true);
+        }}
+        aria-label={`Bewerk ${group.name}`}
+        className="flex shrink-0 items-center justify-center rounded-lg bg-secondary p-2 text-secondary-foreground transition-colors hover:bg-secondary/80"
+      >
+        <Pencil className="size-4" />
+      </button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Product bewerken</DialogTitle>
+            <DialogDescription>Titel aanpassen of naar een andere categorie verplaatsen.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Titel</label>
+              <input
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Categorie</label>
+              <select
+                value={targetCategory}
+                onChange={(e) => setTargetCategory(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void submit()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+              Opslaan
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -635,6 +753,8 @@ function ItemImage({
           src={imageUrl}
           alt={name}
           loading="lazy"
+          decoding="async"
+          fetchPriority="low"
           className="h-full w-full object-contain p-2"
           onError={() => setFailed(true)}
         />

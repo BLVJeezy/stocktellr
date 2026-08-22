@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Radio,
   History,
+  RotateCcw,
   Save,
 } from "lucide-react";
 import { Gamepad2, Popcorn, Lightbulb, Ticket, Glasses } from "lucide-react";
@@ -19,7 +20,7 @@ import { FileText } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { useInventory } from "@/hooks/use-inventory";
+import { resetAllCounts, useInventory } from "@/hooks/use-inventory";
 import { useCategoryBanners, uploadCategoryBanner } from "@/hooks/use-category-banners";
 import { useSaveSnapshot } from "@/hooks/use-snapshots";
 import { CATEGORIES, toCsv } from "@/lib/inventory";
@@ -63,6 +64,7 @@ function Dashboard() {
   const { data, isLoading } = useInventory();
   const { data: banners } = useCategoryBanners();
   const saveSnapshot = useSaveSnapshot();
+  const queryClientForReset = useQueryClient();
   const [defaultLabel] = useState(() => {
     const now = new Date();
     const months = [
@@ -122,6 +124,27 @@ function Dashboard() {
     );
   };
 
+  const [resetting, setResetting] = useState(false);
+  const handleReset = async () => {
+    if (
+      !window.confirm(
+        "Alle producten terugzetten naar 0? Dit wist alle huidige tellingen in alle categorieën. Bewaar eerst een telling als je die wil behouden."
+      )
+    )
+      return;
+    if (!window.confirm("Zeker? Dit kan niet ongedaan gemaakt worden.")) return;
+    setResetting(true);
+    try {
+      await resetAllCounts();
+      await queryClientForReset.invalidateQueries({ queryKey: ["inventory"] });
+      toast.success("Alle producten teruggezet naar 0");
+    } catch (err) {
+      toast.error(`Reset mislukt: ${(err as Error).message}`);
+    } finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-10 md:max-w-5xl md:pb-16">
       <header className="rounded-b-3xl bg-header px-5 pb-8 pt-8 text-header-foreground md:mt-6 md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:gap-6 md:rounded-3xl md:px-10 md:py-10">
@@ -135,7 +158,7 @@ function Dashboard() {
             Iedereen telt tegelijk — alles synchroniseert vanzelf.
           </p>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-2 md:mt-0 md:shrink-0 md:grid-cols-4">
+        <div className="mt-5 grid grid-cols-2 gap-2 md:mt-0 md:shrink-0 md:grid-cols-5">
           <button
             onClick={handleSaveSnapshot}
             disabled={saveSnapshot.isPending || isLoading}
@@ -168,6 +191,14 @@ function Dashboard() {
           >
             <Download className="size-4" />
             CSV
+          </button>
+          <button
+            onClick={() => void handleReset()}
+            disabled={resetting || isLoading}
+            className="col-span-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-destructive/90 px-4 py-3 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive disabled:opacity-60 md:col-span-1"
+          >
+            {resetting ? <Loader2 className="size-4 animate-spin" /> : <RotateCcw className="size-4" />}
+            Reset alles naar 0
           </button>
         </div>
       </header>
@@ -258,6 +289,7 @@ function CategoryTile({
             src={bannerUrl}
             alt={name}
             loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover"
             onError={() => setFailed(true)}
           />
