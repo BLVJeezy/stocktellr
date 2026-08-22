@@ -95,7 +95,10 @@ function CountScreen() {
     }
     return Array.from(map.entries()).map(([name, units]) => ({
       name,
-      units: units.sort((a, b) => a.sort_order - b.sort_order),
+      units: units.sort((a, b) => {
+        const unitRank = (u: string) => (u.toUpperCase() === "LOS" ? 0 : 1);
+        return unitRank(a.unit) - unitRank(b.unit) || a.sort_order - b.sort_order;
+      }),
     }));
   }, [items]);
 
@@ -323,7 +326,7 @@ function ProductGroupCard({
         ) : null}
       </div>
 
-      <div className={"mt-3 grid gap-3 " + (multiUnit ? "grid-cols-2" : "grid-cols-1")}>
+      <div className={"mt-3 grid gap-3 " + (multiUnit ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
         {group.units.map((unit: Item) => {
           const total = locations.reduce((s, loc) => s + qtyOf(unit.id, loc), 0);
           return (

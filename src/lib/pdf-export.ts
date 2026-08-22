@@ -3,6 +3,93 @@ import autoTable from "jspdf-autotable";
 
 import { CATEGORIES, type Count, type Item } from "./inventory";
 import { lastFormula } from "./formula-history";
+import type { SnapshotRow } from "@/hooks/use-snapshots";
+
+/** Builds a PDF report for one saved snapshot (history entry), grouped by category. */
+export function exportSnapshotPdf(label: string, takenAt: string, rows: SnapshotRow[]) {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const date = new Date(takenAt).toLocaleDateString("nl-BE", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  let first = true;
+
+  for (const cat of CATEGORIES) {
+    const catRows = rows.filter((r) => r.item_category === cat.key);
+    if (catRows.length === 0) continue;
+
+    const grouped = new Map<string, { unit: string; locations: Map<string, number> }>();
+    for (const r of catRows) {
+      const key = `${r.item_name}::${r.item_unit}`;
+      const entry = grouped.get(key) ?? { unit: r.item_unit, locations: new Map() };
+      entry.locations.set(r.location, Number(r.qty));
+      grouped.set(key, entry);
+    }
+    const productNames = Array.from(new Set(catRows.map((r) => r.item_name)));
+    const locations = Array.from(new Set(catRows.map((r) => r.location)));
+
+    if (!first) doc.addPage();
+    first = false;
+
+    doc.setFontSize(16);
+    doc.text(`${label} — ${cat.name}`, 40, 46);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Opgeslagen op ${date} · locaties: ${locations.join(", ")}`, 40, 62);
+    doc.setTextColor(0);
+
+    let catTotal = 0;
+    const body = productNames
+      .map((name) => {
+        const rowsForName = catRows.filter((r) => r.item_name === name);
+        // A product may have both LOS and DOOS rows; list each unit separately.
+        const byUnit = new Map<string, SnapshotRow[]>();
+        for (const r of rowsForName) {
+          const arr = byUnit.get(r.item_unit) ?? [];
+          arr.push(r);
+          byUnit.set(r.item_unit, arr);
+        }
+        return Array.from(byUnit.entries()).map(([unit, unitRows]) => {
+          const perLoc = locations.map((loc) => {
+            const qty = unitRows.find((r) => r.location === loc)?.qty ?? 0;
+            return String(qty);
+          });
+          const total = unitRows.reduce((s, r) => s + Number(r.qty), 0);
+          catTotal += total;
+          return [name, unit, ...perLoc, String(total)];
+        });
+      })
+      .flat();
+
+    autoTable(doc, {
+      startY: 76,
+      head: [["Artikel", "Eenheid", ...locations, "Totaal"]],
+      body,
+      foot: [
+        [
+          { content: `Totaal ${cat.name}`, colSpan: 2 + locations.length },
+          String(catTotal),
+        ],
+      ],
+      styles: { fontSize: 8, cellPadding: 4 },
+      headStyles: { fillColor: [39, 58, 46], textColor: 255 },
+      footStyles: { fillColor: [231, 240, 233], textColor: 20, fontStyle: "bold" },
+      columnStyles: { 1: { halign: "center" } },
+      margin: { left: 40, right: 40, bottom: 40 },
+    });
+  }
+
+  if (first) {
+    doc.setFontSize(14);
+    doc.text(`${label} — geen artikelen in deze telling`, 40, 46);
+  }
+
+  const safeName = label.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  doc.save(`${safeName || "telling"}.pdf`);
+}
 
 /** Builds a per-category PDF report with the formulas used and totals. */
 export function exportInventoryPdf(items: Item[], counts: Count[]) {

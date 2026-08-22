@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Download, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, FileText, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
 import { useSnapshot, type SnapshotRow } from "@/hooks/use-snapshots";
 import { CATEGORIES, toCsv } from "@/lib/inventory";
+import { exportSnapshotPdf } from "@/lib/pdf-export";
 
 export const Route = createFileRoute("/history/$snapshotId")({
   head: () => ({
@@ -96,6 +97,12 @@ function SnapshotDetail() {
     toast.success("CSV gedownload");
   };
 
+  const handleExportPdf = () => {
+    if (!data?.snapshot || !data.rows) return;
+    exportSnapshotPdf(data.snapshot.label, data.snapshot.taken_at, data.rows);
+    toast.success("PDF gedownload");
+  };
+
   if (isLoading) {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-md items-center justify-center bg-background">
@@ -136,13 +143,22 @@ function SnapshotDetail() {
               Opgeslagen op {formatDate(data.snapshot.taken_at)}
             </p>
           </div>
-          <button
-            onClick={handleExport}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98]"
-          >
-            <Download className="size-4" />
-            CSV
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportPdf}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98] md:hover:brightness-110"
+            >
+              <FileText className="size-4" />
+              PDF
+            </button>
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold text-header-foreground transition-colors hover:bg-white/20 active:scale-[0.98]"
+            >
+              <Download className="size-4" />
+              CSV
+            </button>
+          </div>
         </div>
       </header>
 
