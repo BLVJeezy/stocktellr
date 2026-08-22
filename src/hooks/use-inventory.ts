@@ -13,7 +13,11 @@ async function fetchInventory() {
   if (itemsRes.error) throw itemsRes.error;
   if (countsRes.error) throw countsRes.error;
   return {
-    items: (itemsRes.data ?? []) as Item[],
+    items: (itemsRes.data ?? []).map((row) =>
+      // pack_size / units_per_pack are optional pack-conversion fields that may
+      // not be present on every row yet; default them so the UI keeps working.
+      ({ ...row, pack_size: row.pack_size ?? null, units_per_pack: row.units_per_pack ?? null }) as unknown as Item,
+    ) as Item[],
     counts: (countsRes.data ?? []).map((c) => ({
       ...c,
       qty: Number(c.qty),
