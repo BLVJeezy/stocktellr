@@ -597,7 +597,7 @@ function LocationRow({
               if (error) setError(null);
             }}
             onFocus={(e) => {
-              setDraft(String(qty));
+              setDraft(formula ?? String(qty));
               setError(null);
               loadHistory();
               setShowHistory(true);
