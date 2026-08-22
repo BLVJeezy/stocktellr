@@ -13,11 +13,16 @@ async function fetchInventory() {
   if (itemsRes.error) throw itemsRes.error;
   if (countsRes.error) throw countsRes.error;
   return {
-    items: (itemsRes.data ?? []).map((row) =>
+    items: (itemsRes.data ?? []).map((row) => {
       // pack_size / units_per_pack are optional pack-conversion fields that may
-      // not be present on every row yet; default them so the UI keeps working.
-      ({ ...row, pack_size: row.pack_size ?? null, units_per_pack: row.units_per_pack ?? null }) as unknown as Item,
-    ) as Item[],
+      // not be present in the generated types yet; default them so the UI works.
+      const r = row as Record<string, unknown>;
+      return {
+        ...row,
+        pack_size: (r.pack_size as string | null) ?? null,
+        units_per_pack: (r.units_per_pack as number | null) ?? null,
+      } as unknown as Item;
+    }) as Item[],
     counts: (countsRes.data ?? []).map((c) => ({
       ...c,
       qty: Number(c.qty),
