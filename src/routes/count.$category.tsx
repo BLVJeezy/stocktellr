@@ -557,14 +557,15 @@ function LocationRow({
   }, [draft]);
 
   const showError = error ?? (preview && !preview.valid ? "Ongeldige formule — controleer de tekens" : null);
+  const liveTotal = preview?.valid ? preview.result : qty;
 
   return (
     <div>
-      <div className="flex items-center gap-2">
-        <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted-foreground">
-          {location}
-        </span>
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+          <span className="w-14 shrink-0 truncate text-xs font-medium text-muted-foreground">
+            {location}
+          </span>
           <button
             type="button"
             aria-label={`Min ${location}`}
@@ -573,7 +574,7 @@ function LocationRow({
               setDraft(null);
               void save(qty - 1);
             }}
-            className="flex size-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition-transform active:scale-95"
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition-transform active:scale-95"
           >
             <Minus className="size-4" />
           </button>
@@ -607,7 +608,7 @@ function LocationRow({
               }
             }}
             className={
-              "h-9 w-24 rounded-lg border bg-background text-center text-sm font-semibold tabular-nums text-foreground outline-none transition-colors focus:ring-2 " +
+              "h-9 w-20 min-w-0 flex-1 rounded-lg border bg-background text-center text-sm font-semibold tabular-nums text-foreground outline-none transition-colors focus:ring-2 " +
               (showError
                 ? "border-destructive text-destructive ring-2 ring-destructive/30 focus:border-destructive focus:ring-destructive/40"
                 : "border-input focus:border-ring focus:ring-ring/30")
@@ -621,10 +622,18 @@ function LocationRow({
               setDraft(null);
               void save(qty + 1);
             }}
-            className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform active:scale-95"
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform active:scale-95"
           >
             <Plus className="size-4" />
           </button>
+        </div>
+        <div className="flex shrink-0 flex-col items-end rounded-lg bg-secondary/50 px-2.5 py-1 leading-tight">
+          <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+            Totaal
+          </span>
+          <span className="text-sm font-bold tabular-nums text-card-foreground">
+            {liveTotal}
+          </span>
         </div>
       </div>
       {preview?.valid && !showError ? (
