@@ -103,6 +103,7 @@ export type Database = {
           item_id: string
           location: string
           qty: number
+          formula: string | null
           updated_at: string
         }
         Insert: {
@@ -110,6 +111,7 @@ export type Database = {
           item_id: string
           location: string
           qty?: number
+          formula?: string | null
           updated_at?: string
         }
         Update: {
@@ -117,6 +119,7 @@ export type Database = {
           item_id?: string
           location?: string
           qty?: number
+          formula?: string | null
           updated_at?: string
         }
         Relationships: [

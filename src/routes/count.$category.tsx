@@ -76,6 +76,8 @@ function CountScreen() {
   const counts = data?.counts ?? [];
   const qtyOf = (itemId: string, loc: string) =>
     counts.find((c) => c.item_id === itemId && c.location === loc)?.qty ?? 0;
+  const formulaOf = (itemId: string, loc: string) =>
+    counts.find((c) => c.item_id === itemId && c.location === loc)?.formula ?? null;
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-28 md:max-w-6xl">
@@ -142,6 +144,7 @@ function CountScreen() {
                       itemId={item.id}
                       location={loc}
                       qty={qtyOf(item.id, loc)}
+                      formula={formulaOf(item.id, loc)}
                     />
                   ))}
                 </div>
@@ -502,10 +505,12 @@ function LocationRow({
   itemId,
   location,
   qty,
+  formula,
 }: {
   itemId: string;
   location: string;
   qty: number;
+  formula: string | null;
 }) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<string | null>(null);
@@ -514,10 +519,10 @@ function LocationRow({
   const inputRef = useRef<HTMLInputElement>(null);
   const { history, load: loadHistory, remember } = useFormulaHistory(itemId, location);
 
-  const save = async (next: number) => {
+  const save = async (next: number, rawFormula: string | null) => {
     const value = Number.isFinite(next) && next > 0 ? next : 0;
     try {
-      await setCount(itemId, location, value);
+      await setCount(itemId, location, value, rawFormula);
       await queryClient.invalidateQueries({ queryKey: ["inventory"] });
     } catch {
       toast.error("Opslaan mislukt");
@@ -531,7 +536,7 @@ function LocationRow({
       setDraft(null);
       setError(null);
       setShowHistory(false);
-      return void save(0);
+      return void save(0, null);
     }
     const result = evalFormula(raw);
     if (result === null) {
@@ -545,7 +550,8 @@ function LocationRow({
     setError(null);
     remember(raw);
     setShowHistory(false);
-    await save(result);
+    // Keep the raw formula text visible in the box; the computed sum lives in the Totaal box.
+    await save(result, raw);
   };
 
   // Live preview of the typed formula, e.g. "10+20+56" → 86.
@@ -572,7 +578,7 @@ function LocationRow({
             onClick={() => {
               setError(null);
               setDraft(null);
-              void save(qty - 1);
+              void save(qty - 1, null);
             }}
             className="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-secondary-foreground transition-transform active:scale-95"
           >
@@ -585,7 +591,7 @@ function LocationRow({
             aria-invalid={showError ? true : undefined}
             placeholder="Formule, bv. 10+20+56"
             title="Tip: tel op met een formule, bv. 10+20+56"
-            value={draft ?? String(qty)}
+            value={draft ?? (formula ?? String(qty))}
             onChange={(e) => {
               setDraft(e.target.value);
               if (error) setError(null);
@@ -618,7 +624,7 @@ function LocationRow({
             onClick={() => {
               setError(null);
               setDraft(null);
-              void save(qty + 1);
+              void save(qty + 1, null);
             }}
             className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-transform active:scale-95"
           >

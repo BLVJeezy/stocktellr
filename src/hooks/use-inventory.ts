@@ -7,7 +7,7 @@ import type { Count, Item } from "@/lib/inventory";
 async function fetchInventory() {
   const [itemsRes, countsRes] = await Promise.all([
     supabase.from("items").select("*").order("sort_order"),
-    supabase.from("counts").select("id, item_id, location, qty"),
+    supabase.from("counts").select("id, item_id, location, qty, formula"),
   ]);
   if (itemsRes.error) throw itemsRes.error;
   if (countsRes.error) throw countsRes.error;
@@ -40,11 +40,11 @@ export function useInventory() {
   return query;
 }
 
-export async function setCount(itemId: string, location: string, qty: number) {
+export async function setCount(itemId: string, location: string, qty: number, formula: string | null = null) {
   const { error } = await supabase
     .from("counts")
     .upsert(
-      { item_id: itemId, location, qty, updated_at: new Date().toISOString() },
+      { item_id: itemId, location, qty, formula, updated_at: new Date().toISOString() },
       { onConflict: "item_id,location" },
     );
   if (error) throw error;

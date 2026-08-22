@@ -1,0 +1,1 @@
+ALTER TABLE public.counts ADD COLUMN IF NOT EXISTS formula TEXT;

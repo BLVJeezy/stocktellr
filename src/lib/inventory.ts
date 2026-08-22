@@ -99,6 +99,7 @@ export type Count = {
   item_id: string;
   location: string;
   qty: number;
+  formula: string | null;
 };
 
 export function toCsv(rows: string[][]): string {
