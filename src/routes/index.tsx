@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Boxes,
@@ -226,6 +226,7 @@ function CategoryTile({
   bannerUrl: string | null;
 }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -238,19 +239,19 @@ function CategoryTile({
       setFailed(false);
       await queryClient.invalidateQueries({ queryKey: ["category-banners"] });
       toast.success("Bannerfoto bijgewerkt");
-    } catch {
-      toast.error("Uploaden mislukt");
+    } catch (err) {
+      toast.error(`Uploaden mislukt: ${(err as Error).message ?? "onbekende fout"}`);
     } finally {
       setBusy(false);
     }
   };
 
+  const goToCategory = () => {
+    void navigate({ to: "/count/$category", params: { category: categoryKey } });
+  };
+
   return (
-    <Link
-      to="/count/$category"
-      params={{ category: categoryKey }}
-      className="block overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-primary/40 md:hover:shadow-md"
-    >
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all md:hover:-translate-y-0.5 md:hover:border-primary/40 md:hover:shadow-md">
       <div className="relative flex h-24 w-full items-center justify-center overflow-hidden bg-accent/60">
         {bannerUrl && !failed ? (
           <img
@@ -277,19 +278,19 @@ function CategoryTile({
         <button
           type="button"
           disabled={busy}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            fileRef.current?.click();
-          }}
+          onClick={() => fileRef.current?.click()}
           aria-label={`Bannerfoto instellen voor ${name}`}
-          className="absolute bottom-1.5 right-1.5 flex size-8 items-center justify-center rounded-lg bg-card/90 text-card-foreground shadow-sm ring-1 ring-border transition-colors hover:bg-card disabled:opacity-60"
+          className="absolute bottom-1.5 right-1.5 z-10 flex size-9 items-center justify-center rounded-lg bg-card/95 text-card-foreground shadow-md ring-1 ring-border transition-colors hover:bg-card active:scale-95 disabled:opacity-60"
         >
           {busy ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
         </button>
       </div>
 
-      <div className="p-4 md:p-5">
+      <button
+        type="button"
+        onClick={goToCategory}
+        className="block w-full p-4 text-left active:scale-[0.99] md:p-5"
+      >
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-base font-semibold text-card-foreground">{name}</h2>
@@ -310,7 +311,7 @@ function CategoryTile({
             {counted}/{total}
           </span>
         </div>
-      </div>
-    </Link>
+      </button>
+    </div>
   );
 }
