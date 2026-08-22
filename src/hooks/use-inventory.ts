@@ -19,8 +19,8 @@ async function fetchInventory() {
       const r = row as Record<string, unknown>;
       return {
         ...row,
-        pack_size: (r.pack_size as string | null) ?? null,
-        units_per_pack: (r.units_per_pack as number | null) ?? null,
+        pack_size: (r["pack_size"] as string | null) ?? null,
+        units_per_pack: (r["units_per_pack"] as number | null) ?? null,
       } as unknown as Item;
     }) as Item[],
     counts: (countsRes.data ?? []).map((c) => ({
