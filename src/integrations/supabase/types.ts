@@ -14,24 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      category_banners: {
-        Row: {
-          category: string
-          image_url: string | null
-          updated_at: string
-        }
-        Insert: {
-          category: string
-          image_url?: string | null
-          updated_at?: string
-        }
-        Update: {
-          category?: string
-          image_url?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       count_snapshot_rows: {
         Row: {
           id: string
@@ -103,7 +85,6 @@ export type Database = {
           item_id: string
           location: string
           qty: number
-          formula: string | null
           updated_at: string
         }
         Insert: {
@@ -111,7 +92,6 @@ export type Database = {
           item_id: string
           location: string
           qty?: number
-          formula?: string | null
           updated_at?: string
         }
         Update: {
@@ -119,7 +99,6 @@ export type Database = {
           item_id?: string
           location?: string
           qty?: number
-          formula?: string | null
           updated_at?: string
         }
         Relationships: [
