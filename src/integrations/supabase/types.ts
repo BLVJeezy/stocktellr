@@ -99,27 +99,27 @@ export type Database = {
       }
       counts: {
         Row: {
+          formula: string | null
           id: string
           item_id: string
           location: string
           qty: number
-          formula: string | null
           updated_at: string
         }
         Insert: {
+          formula?: string | null
           id?: string
           item_id: string
           location: string
           qty?: number
-          formula?: string | null
           updated_at?: string
         }
         Update: {
+          formula?: string | null
           id?: string
           item_id?: string
           location?: string
           qty?: number
-          formula?: string | null
           updated_at?: string
         }
         Relationships: [
